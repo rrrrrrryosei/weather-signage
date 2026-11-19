@@ -280,8 +280,8 @@
       min-width: 0;
       min-height: 0;
       display: grid;
-      /* Row 2 (Hourly) reduced to roughly half previous height */
-      grid-template-rows: auto minmax(0, 0.56fr) minmax(0, 1.54fr) auto;
+      /* Row 1 (Current Weather & Clock) expanded into freed space; Row 2 compact; Row 3 kept at original height */
+      grid-template-rows: minmax(0, 0.94fr) minmax(0, 0.54fr) minmax(0, 0.98fr) auto;
       gap: clamp(11px, 1.35vh, 18px);
     }
 
@@ -363,22 +363,23 @@
     }
 
     /* =====================================================================
-       5. LEFT ROW 1: COMPACT CLOCK & PROMINENT CURRENT WEATHER
+       5. LEFT ROW 1: EXPANDED HERO CURRENT WEATHER & COMPACT CLOCK
        ===================================================================== */
     .hero-block {
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       justify-content: space-between;
-      gap: clamp(10px, 1.2vw, 18px);
-      padding: clamp(2px, 0.4vh, 6px) clamp(4px, 0.5vw, 8px);
+      gap: clamp(12px, 1.4vw, 22px);
+      padding: clamp(4px, 0.8vh, 12px) clamp(6px, 0.7vw, 12px);
       min-width: 0;
+      min-height: 0;
       transition: opacity 1.4s ease, filter 1.4s ease;
     }
 
     .hero-clock-wrap {
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
+      justify-content: center;
       min-width: 0;
       flex-shrink: 0;
     }
@@ -390,9 +391,9 @@
       line-height: 0.95;
     }
 
-    /* Smaller, understated clock */
+    /* Compact, understated clock */
     .hero-time {
-      font-size: clamp(24px, 4.1vh, 46px);
+      font-size: clamp(24px, 4.2vh, 48px);
       font-weight: 200;
       letter-spacing: -0.02em;
       color: #ffffff;
@@ -400,21 +401,21 @@
     }
 
     .hero-sec {
-      font-size: clamp(10.5px, 1.6vh, 18px);
+      font-size: clamp(10.5px, 1.65vh, 18px);
       font-weight: 300;
       color: rgba(255, 255, 255, 0.65);
       text-shadow: var(--glow-soft);
     }
 
     .hero-date-row {
-      margin-top: clamp(3px, 0.45vh, 6px);
+      margin-top: clamp(4px, 0.6vh, 8px);
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
     .hero-date {
-      font-size: clamp(9.5px, 1.25vh, 13.5px);
+      font-size: clamp(9.5px, 1.3vh, 14px);
       font-weight: 500;
       color: var(--text-soft);
       text-shadow: var(--glow-soft);
@@ -438,11 +439,12 @@
       display: inline-flex;
     }
 
-    /* Larger, high-legibility current weather readout */
+    /* Spacious, prominent current weather readout */
     .hero-weather-wrap {
       display: flex;
       align-items: center;
-      gap: clamp(10px, 1.2vw, 18px);
+      justify-content: flex-end;
+      gap: clamp(12px, 1.4vw, 24px);
       min-width: 0;
     }
 
@@ -450,15 +452,16 @@
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: clamp(2px, 0.35vh, 5px);
+      justify-content: center;
+      gap: clamp(4px, 0.75vh, 11px);
       min-width: 0;
     }
 
     .hero-loc-row {
       display: flex;
       align-items: center;
-      gap: 5px;
-      font-size: clamp(14px, 2.05vh, 23px);
+      gap: 6px;
+      font-size: clamp(15px, min(2.6vh, 1.6vw), 28px);
       font-weight: 600;
       color: #ffffff;
       text-shadow: var(--glow-soft);
@@ -468,8 +471,8 @@
     .hero-cond-row {
       display: flex;
       align-items: center;
-      gap: clamp(6px, 0.7vw, 12px);
-      font-size: clamp(12.5px, 1.85vh, 20px);
+      gap: clamp(8px, 0.8vw, 14px);
+      font-size: clamp(13px, min(2.35vh, 1.45vw), 25px);
       font-weight: 600;
       color: #ffffff;
       text-shadow: var(--glow-soft);
@@ -478,19 +481,19 @@
     }
 
     .hero-sub-metrics {
-      font-size: clamp(10.5px, 1.48vh, 16px);
+      font-size: clamp(11px, min(1.85vh, 1.15vw), 19.5px);
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.86);
+      color: rgba(255, 255, 255, 0.88);
       text-shadow: var(--glow-soft);
       white-space: nowrap;
       line-height: 1.15;
     }
 
     .hero-temp {
-      font-size: clamp(46px, 8.4vh, 92px);
+      font-size: clamp(58px, 11.8vh, 132px);
       font-weight: 200;
-      line-height: 0.88;
-      letter-spacing: -0.035em;
+      line-height: 0.86;
+      letter-spacing: -0.04em;
       color: #ffffff;
       text-shadow: var(--glow-hero);
       white-space: nowrap;
@@ -615,11 +618,11 @@
     }
 
     /* =====================================================================
-       7. LEFT ROW 3: HEADERLESS 7-DAY FORECAST & CALENDAR
+       7. LEFT ROW 3: COMPACT HEADERLESS 7-DAY FORECAST & CALENDAR
        ===================================================================== */
     .daily-card,
     .calendar-card {
-      padding: clamp(8px, 1.1vh, 14px) clamp(10px, 1.1vw, 15px);
+      padding: clamp(7px, 0.95vh, 12px) clamp(10px, 1.1vw, 14px);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -635,9 +638,9 @@
 
     .daily-row {
       display: grid;
-      grid-template-columns: clamp(28px, 3vw, 40px) clamp(40px, 4.4vw, 56px) clamp(24px, 2.5vw, 34px) minmax(0, 1fr) clamp(24px, 2.5vw, 34px);
+      grid-template-columns: clamp(28px, 3vw, 38px) clamp(38px, 4.2vw, 52px) clamp(24px, 2.4vw, 32px) minmax(0, 1fr) clamp(24px, 2.4vw, 32px);
       align-items: center;
-      gap: clamp(4px, 0.45vw, 8px);
+      gap: clamp(4px, 0.45vw, 7px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
     .daily-row:last-child {
@@ -645,7 +648,7 @@
     }
 
     .daily-day {
-      font-size: clamp(10px, 1.4vh, 15px);
+      font-size: clamp(9.5px, 1.3vh, 13.5px);
       font-weight: 600;
       color: #ffffff;
       white-space: nowrap;
@@ -659,8 +662,8 @@
       gap: 3px;
     }
     .daily-icon {
-      width: clamp(17px, 2.25vh, 24px);
-      height: clamp(17px, 2.25vh, 24px);
+      width: clamp(15px, 2vh, 21px);
+      height: clamp(15px, 2vh, 21px);
       flex-shrink: 0;
     }
     .daily-icon svg {
@@ -668,19 +671,19 @@
       height: 100%;
     }
     .daily-pop {
-      font-size: clamp(8.5px, 1.1vh, 12px);
+      font-size: clamp(8px, 1.02vh, 11px);
       font-weight: 700;
       color: var(--cyan);
       text-shadow: var(--glow-cyan);
     }
 
     .daily-min {
-      font-size: clamp(9.5px, 1.35vh, 14px);
+      font-size: clamp(9px, 1.25vh, 13px);
       color: var(--text-dim);
       text-align: right;
     }
     .daily-max {
-      font-size: clamp(10px, 1.38vh, 14.5px);
+      font-size: clamp(9.5px, 1.28vh, 13.5px);
       font-weight: 600;
       color: #ffffff;
       text-align: left;
@@ -689,7 +692,7 @@
 
     .temp-bar-track {
       position: relative;
-      height: clamp(4.5px, 0.6vh, 7px);
+      height: clamp(4px, 0.55vh, 6px);
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.12);
     }
@@ -703,8 +706,8 @@
     .temp-bar-now {
       position: absolute;
       top: 50%;
-      width: clamp(6.5px, 0.9vh, 10px);
-      height: clamp(6.5px, 0.9vh, 10px);
+      width: clamp(6px, 0.85vh, 9px);
+      height: clamp(6px, 0.85vh, 9px);
       border-radius: 50%;
       background: #ffffff;
       transform: translate(-50%, -50%);
@@ -716,13 +719,13 @@
       display: grid;
       grid-template-columns: repeat(7, minmax(0, 1fr));
       text-align: center;
-      margin-bottom: clamp(4px, 0.55vh, 8px);
-      padding-bottom: clamp(3px, 0.4vh, 5px);
+      margin-bottom: clamp(2px, 0.4vh, 5px);
+      padding-bottom: clamp(2px, 0.3vh, 4px);
       border-bottom: 1px solid var(--glass-divider);
       flex-shrink: 0;
     }
     .cal-wd {
-      font-size: clamp(9px, 1.2vh, 12.5px);
+      font-size: clamp(8.5px, 1.1vh, 11.5px);
       font-weight: 600;
       color: var(--text-dim);
     }
@@ -740,13 +743,13 @@
     }
 
     .cal-day {
-      width: clamp(21px, 2.85vh, 32px);
-      height: clamp(21px, 2.85vh, 32px);
+      width: clamp(19px, 2.55vh, 28px);
+      height: clamp(19px, 2.55vh, 28px);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: clamp(9.5px, 1.35vh, 14.5px);
+      font-size: clamp(9px, 1.22vh, 13px);
       font-weight: 500;
       color: rgba(255, 255, 255, 0.90);
     }
@@ -1344,7 +1347,7 @@
   <main class="dashboard">
     <!-- ==================== LEFT COLUMN ==================== -->
     <section class="left-col">
-      <!-- Row 1: Compact Clock & Prominent Current Weather -->
+      <!-- Row 1: Expanded Current Weather & Compact Clock -->
       <header class="hero-block">
         <div class="hero-clock-wrap">
           <div class="hero-time-row">
@@ -1359,7 +1362,7 @@
         <div class="hero-weather-wrap">
           <div class="hero-weather-info">
             <div class="hero-loc-row">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/>
               </svg>
               <span id="loc-name">横浜</span>
@@ -1386,7 +1389,7 @@
         </div>
       </article>
 
-      <!-- Row 3: Headerless 7-Day Forecast & Monthly Calendar -->
+      <!-- Row 3: Compact Headerless 7-Day Forecast & Monthly Calendar -->
       <div class="split-row">
         <article class="glass-card daily-card">
           <div class="daily-list" id="daily-list"></div>
@@ -2685,13 +2688,11 @@
       function initIssStaticLayers() {
         const grat = document.getElementById('iss-graticule-layer');
         let gHtml = '';
-        // Latitude lines (-60, -30, 0, 30, 60)
         [-60, -30, 0, 30, 60].forEach((lat) => {
           const y = projLat(lat);
           const op = lat === 0 ? 0.11 : 0.055;
           gHtml += `<line x1="0" y1="${y}" x2="360" y2="${y}" stroke="rgba(255,255,255,${op})" stroke-width="0.6" stroke-dasharray="${lat === 0 ? '3 4' : '2 4'}"/>`;
         });
-        // Longitude lines (-120, -60, 0, 60, 120)
         [-120, -60, 0, 60, 120].forEach((lon) => {
           const x = projLon(lon);
           const op = lon === 0 ? 0.09 : 0.05;
@@ -2699,14 +2700,12 @@
         });
         grat.innerHTML = gHtml;
 
-        // Instant fallback world silhouette before Natural Earth vector resolves
         const worldEl = document.getElementById('iss-world-layer');
         worldEl.innerHTML = FALLBACK_WORLD_PATHS.map((d) =>
           `<path d="${d}" fill="rgba(135, 175, 225, 0.28)" stroke="rgba(175, 215, 255, 0.22)" stroke-width="0.35"/>`
         ).join('');
       }
 
-      /* Pure-JS TopoJSON decoder for Natural Earth world-atlas@2/land-110m.json */
       function topojsonLandToSvgPath(topo) {
         const sx = topo.transform ? topo.transform.scale[0] : 1;
         const sy = topo.transform ? topo.transform.scale[1] : 1;
