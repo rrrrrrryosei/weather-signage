@@ -148,7 +148,7 @@
       pointer-events: none;
       overflow: hidden;
       background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 52%, var(--sky-bot) 100%);
-      transition: background 1.2s ease;
+      transition: background 1.2s ease, filter 1.6s ease, opacity 1.6s ease;
     }
 
     /* Seamless radial ambient light orbs — fade completely to 0% before radius 60% */
@@ -190,6 +190,80 @@
       height: 100%;
     }
 
+    /* Night Dimming Backdrop Veil (sits between sky and dashboard) */
+    #night-dim-veil {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 25% 18%, rgba(2, 5, 14, 0.58) 0%, rgba(1, 3, 9, 0.84) 75%);
+      opacity: 0;
+      transition: opacity 1.8s ease;
+    }
+
+    /* =====================================================================
+       2.5 AUTOMATIC LATE-NIGHT DIMMING MODE (0:00 - 6:00 + BURN-IN SHIFT)
+       ===================================================================== */
+    body[data-night-dim="on"] {
+      --glow-hero:
+        0 0 12px rgba(255, 236, 206, 0.34),
+        0 0 28px rgba(190, 215, 255, 0.14);
+      --glow-soft:
+        0 0 6px rgba(255, 240, 220, 0.22);
+      --glow-cyan:
+        0 0 6px rgba(100, 210, 255, 0.35);
+    }
+
+    body[data-night-dim="on"] #sky-layer {
+      filter: brightness(0.28) saturate(0.72);
+    }
+
+    body[data-night-dim="on"] #night-dim-veil {
+      opacity: 1;
+    }
+
+    body[data-night-dim="on"] .dashboard {
+      animation: burnInShift 240s ease-in-out infinite;
+    }
+
+    @keyframes burnInShift {
+      0%   { transform: translate(0px, 0px); }
+      25%  { transform: translate(5px, -3px); }
+      50%  { transform: translate(-4px, 4px); }
+      75%  { transform: translate(-5px, -2px); }
+      100% { transform: translate(0px, 0px); }
+    }
+
+    /* Keep Clock & Current Weather softly glowing while secondary panels recede */
+    body[data-night-dim="on"] .hero-block {
+      opacity: 0.78;
+      filter: brightness(0.86) sepia(0.10);
+    }
+
+    body[data-night-dim="on"] .glass-card {
+      background: rgba(6, 12, 26, 0.56);
+      opacity: 0.36;
+      filter: brightness(0.76) saturate(0.82);
+      box-shadow:
+        0 0 16px rgba(255, 255, 255, 0.035),
+        0 8px 22px rgba(0, 0, 0, 0.52),
+        inset 0 0 14px rgba(255, 255, 255, 0.025);
+    }
+
+    /* Keep Map card slightly interactive when hovered/toggled, and wake up on strong quake */
+    body[data-night-dim="on"] .glass-card:hover {
+      opacity: 0.85;
+      filter: brightness(0.95);
+    }
+
+    body[data-night-dim="on"] .quake-card.quake-alert-wake {
+      opacity: 0.96;
+      filter: none;
+      box-shadow:
+        0 0 28px rgba(248, 113, 113, 0.32),
+        0 10px 26px rgba(0, 0, 0, 0.55);
+    }
+
     /* =====================================================================
        3. MAIN GRID LAYOUT (NO OVERFLOW:HIDDEN ON GRID CONTAINERS SO GLOW BREATHES)
        ===================================================================== */
@@ -202,6 +276,7 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: clamp(14px, 1.5vw, 24px);
+      will-change: transform;
     }
 
     .left-col {
@@ -257,14 +332,14 @@
       -webkit-backdrop-filter: blur(22px) saturate(165%);
       backdrop-filter: blur(22px) saturate(165%);
       box-shadow: var(--glass-shadow);
-      transition: background-color 0.9s ease, box-shadow 0.9s ease;
+      transition: background-color 1.4s ease, box-shadow 1.4s ease, opacity 1.4s ease, filter 1.4s ease;
     }
 
     .card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 6px;
       padding-bottom: clamp(4px, 0.55vh, 7px);
       margin-bottom: clamp(4px, 0.6vh, 8px);
       border-bottom: 1px solid var(--glass-divider);
@@ -305,6 +380,7 @@
       gap: 12px;
       padding: clamp(2px, 0.4vh, 6px) clamp(4px, 0.5vw, 8px);
       min-width: 0;
+      transition: opacity 1.4s ease, filter 1.4s ease;
     }
 
     .hero-clock-wrap {
@@ -336,13 +412,36 @@
       text-shadow: var(--glow-soft);
     }
 
-    .hero-date {
+    .hero-date-row {
       margin-top: clamp(3px, 0.5vh, 6px);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-date {
       font-size: clamp(10.5px, 1.45vh, 15px);
       font-weight: 500;
       color: var(--text-soft);
       text-shadow: var(--glow-soft);
       white-space: nowrap;
+    }
+
+    .night-dim-badge {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 232, 195, 0.14);
+      color: rgba(255, 236, 206, 0.92);
+      padding: 2px 8px;
+      font-size: clamp(8px, 1.05vh, 11px);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    body[data-night-dim="on"] .night-dim-badge {
+      display: inline-flex;
     }
 
     .hero-weather-wrap {
@@ -803,7 +902,9 @@
     .map-controls {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: clamp(4px, 0.4vw, 6px);
+      min-width: 0;
+      flex-shrink: 0;
     }
 
     .pill-btn {
@@ -813,15 +914,16 @@
       background: var(--glass-sub-bg);
       color: var(--text-soft);
       font-family: inherit;
-      font-size: clamp(8.5px, 1.08vh, 11.5px);
+      font-size: clamp(8px, 1.02vh, 11px);
       font-weight: 600;
-      padding: clamp(3px, 0.4vh, 5px) clamp(8px, 0.8vw, 12px);
+      padding: clamp(3px, 0.38vh, 5px) clamp(6px, 0.65vw, 10px);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .pill-btn:hover {
       background: rgba(255, 255, 255, 0.16);
@@ -1236,13 +1338,16 @@
     .shindo-7 { background: rgba(168, 85, 247, 0.90); }
   </style>
 </head>
-<body data-theme="clear-night">
+<body data-theme="clear-night" data-night-dim="off">
   <!-- Dynamic Sky Layer -->
   <div id="sky-layer">
     <div class="sky-aura sky-aura-1"></div>
     <div class="sky-aura sky-aura-2"></div>
     <canvas id="sky-canvas"></canvas>
   </div>
+
+  <!-- Automatic Late-Night Dimming Veil -->
+  <div id="night-dim-veil" aria-hidden="true"></div>
 
   <!-- Main Signage Grid -->
   <main class="dashboard">
@@ -1255,7 +1360,10 @@
             <span class="hero-time" id="clock-hm">--:--</span>
             <span class="hero-sec" id="clock-sec">--</span>
           </div>
-          <div class="hero-date" id="clock-date">----年--月--日 (-)</div>
+          <div class="hero-date-row">
+            <div class="hero-date" id="clock-date">----年--月--日 (-)</div>
+            <span class="night-dim-badge" id="night-dim-badge">🌙 深夜減光中</span>
+          </div>
         </div>
         <div class="hero-weather-wrap">
           <div class="hero-weather-info">
@@ -1396,14 +1504,15 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
             </svg>
-            降水マップ・衛星雲
+            降水マップ
           </div>
           <div class="map-controls">
             <span class="pill-btn" style="cursor:default;">
               <span class="status-dot" id="radar-source-dot"></span>
-              <span id="radar-source-label">気象庁ナウキャスト</span>
+              <span id="radar-source-label">気象庁</span>
             </span>
             <button type="button" class="pill-btn is-active" id="cloud-toggle-btn">雲: ON</button>
+            <button type="button" class="pill-btn is-active" id="dim-toggle-btn">減光: 自動</button>
             <button type="button" class="pill-btn" id="theme-toggle-btn">背景: 自動</button>
           </div>
         </div>
@@ -1468,7 +1577,7 @@
           </div>
         </article>
 
-        <article class="glass-card quake-card">
+        <article class="glass-card quake-card" id="quake-card">
           <div class="card-header">
             <div class="card-title">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1520,15 +1629,22 @@
         quakeIntervalMs: 60 * 1000,
         loopStepMs: 850,
         loopHoldEndMs: 2200,
-        /* Vivid Himawari-9 cloud opacity (boosted as requested) */
+        /* Vivid Himawari-9 cloud opacity */
         cloudOpacityLive: 0.78,
         cloudOpacityForecast: 0.54,
-        radarOpacity: 0.88
+        radarOpacity: 0.88,
+        /* Late-night automatic dimming schedule (0:00 - 6:00 JST) */
+        nightDimStartHour: 0,
+        nightDimEndHour: 6,
+        quakeWakeMinScale: 30,       // Shindo 3+ wakes quake card during night dim
+        quakeWakeDurationMin: 15     // Keep awake for 15 minutes after quake
       };
 
       const STATE = {
         themeOverride: 'auto',
         activeTheme: 'clear-night',
+        nightDimMode: 'auto',        // 'auto' | 'on' | 'off'
+        isNightDimActive: false,
         weatherCode: 0,
         sunriseDate: null,
         sunsetDate: null,
@@ -1547,6 +1663,12 @@
         { id: 'snow', label: '背景: 雪' }
       ];
 
+      const DIM_ORDER = [
+        { id: 'auto', label: '減光: 自動' },
+        { id: 'on', label: '減光: ON' },
+        { id: 'off', label: '減光: OFF' }
+      ];
+
       const pad2 = (n) => String(Math.floor(n)).padStart(2, '0');
       const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -1559,6 +1681,29 @@
           return await res.json();
         } finally {
           clearTimeout(timer);
+        }
+      }
+
+      /* ===================================================================
+         0. AUTOMATIC LATE-NIGHT DIMMING CONTROLLER
+         =================================================================== */
+      function isWithinNightDimHours(now) {
+        const h = now.getHours();
+        const s = CONFIG.nightDimStartHour;
+        const e = CONFIG.nightDimEndHour;
+        if (s === e) return false;
+        return s < e ? (h >= s && h < e) : (h >= s || h < e);
+      }
+
+      function applyNightDim(now = new Date()) {
+        let active = false;
+        if (STATE.nightDimMode === 'on') active = true;
+        else if (STATE.nightDimMode === 'off') active = false;
+        else active = isWithinNightDimHours(now);
+
+        if (STATE.isNightDimActive !== active || document.body.getAttribute('data-night-dim') !== (active ? 'on' : 'off')) {
+          STATE.isNightDimActive = active;
+          document.body.setAttribute('data-night-dim', active ? 'on' : 'off');
         }
       }
 
@@ -1662,6 +1807,7 @@
         document.getElementById('clock-date').textContent =
           `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 (${WEEKDAYS[now.getDay()]})`;
         renderCalendar(now);
+        applyNightDim(now);
       }
 
       /* ===================================================================
@@ -1675,11 +1821,11 @@
         const cosH = (Math.cos(90.833 * rad) - Math.sin(lat * rad) * Math.sin(decl * rad)) /
                      (Math.cos(lat * rad) * Math.cos(decl * rad));
         const clamped = Math.max(-1, Math.min(1, cosH));
-        const H = Math.acos(clamped) / rad; // degrees
+        const H = Math.acos(clamped) / rad;
         const eqTime = 9.87 * Math.sin(2 * rad * (360 / 365) * (doy - 81))
                      - 7.53 * Math.cos(rad * (360 / 365) * (doy - 81))
                      - 1.5 * Math.sin(rad * (360 / 365) * (doy - 81));
-        const tzOffsetMin = 9 * 60; // JST
+        const tzOffsetMin = 9 * 60;
         const solarNoonMin = 720 - 4 * lon - eqTime + tzOffsetMin;
         const halfDayMin = H * 4;
         const sr = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, Math.round(solarNoonMin - halfDayMin));
@@ -1726,12 +1872,11 @@
           `${Math.floor(diffMins / 60)}時間${pad2(diffMins % 60)}分`;
         document.getElementById('sun-state').textContent = stateText;
 
-        // Draw Solar Arc SVG (viewBox 0 0 200 72, horizon at y=48)
         const horizonY = 48;
         const startX = 16, endX = 184, peakY = 10, troughY = 66;
         let sunX, sunY;
         if (isDay) {
-          const t = (now - sr) / (ss - sr); // 0..1
+          const t = (now - sr) / (ss - sr);
           sunX = startX + (endX - startX) * t;
           sunY = horizonY - Math.sin(t * Math.PI) * (horizonY - peakY);
         } else {
@@ -1776,11 +1921,10 @@
       function renderMoonWidget() {
         const now = new Date();
         const synodic = 29.530588853;
-        // Reference New Moon: 2000-01-06 18:14 UTC
         const refUtc = Date.UTC(2000, 0, 6, 18, 14, 0);
         const daysSince = (now.getTime() - refUtc) / 86400000;
         const age = ((daysSince % synodic) + synodic) % synodic;
-        const phase = age / synodic; // 0..1 (0=New, 0.5=Full)
+        const phase = age / synodic;
         const illum = Math.round(((1 - Math.cos(phase * 2 * Math.PI)) / 2) * 100);
 
         let name = '新月';
@@ -1805,18 +1949,15 @@
         document.getElementById('moon-full').textContent =
           daysToFull < 0.8 ? '今夜' : `${Math.round(daysToFull)}日後 (${fullDate.getMonth() + 1}/${fullDate.getDate()})`;
 
-        // Accurate elliptical terminator SVG (Northern Hemisphere: right side lit when waxing)
         const r = 28;
         const cx = 32, cy = 32;
-        const cosP = Math.cos(phase * 2 * Math.PI); // 1 at new, 0 at quarter, -1 at full
+        const cosP = Math.cos(phase * 2 * Math.PI);
         const rx = Math.abs(cosP) * r;
         let litPath = '';
         if (phase < 0.5) {
-          // Waxing: right limb lit (sweep 1)
           const sweepInner = cosP > 0 ? 0 : 1;
           litPath = `M ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx} ${cy + r} A ${rx.toFixed(2)} ${r} 0 0 ${sweepInner} ${cx} ${cy - r} Z`;
         } else {
-          // Waning: left limb lit (sweep 0)
           const sweepInner = cosP > 0 ? 1 : 0;
           litPath = `M ${cx} ${cy - r} A ${r} ${r} 0 0 0 ${cx} ${cy + r} A ${rx.toFixed(2)} ${r} 0 0 ${sweepInner} ${cx} ${cy - r} Z`;
         }
@@ -1843,7 +1984,7 @@
          3. WEATHER ICONS & OPEN-METEO FETCH + SPARKLINE
          =================================================================== */
       function wmoToInfo(code, isNight) {
-        if (code === 0) return { label: isNight ? '快晴' : '快晴', type: isNight ? 'clear-night' : 'clear-day' };
+        if (code === 0) return { label: '快晴', type: isNight ? 'clear-night' : 'clear-day' };
         if (code === 1) return { label: 'おおむね晴れ', type: isNight ? 'clear-night' : 'clear-day' };
         if (code === 2) return { label: '一部曇り', type: isNight ? 'partly-night' : 'partly-day' };
         if (code === 3) return { label: '曇り', type: 'cloudy' };
@@ -1956,7 +2097,6 @@
         document.getElementById('weather-updated').textContent =
           `${pad2(now.getHours())}:${pad2(now.getMinutes())} 更新`;
 
-        // Find current hour index in hourly array
         const nowHourKey = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}T${pad2(now.getHours())}:00`;
         let startIdx = data.hourly.time.findIndex((t) => t >= nowHourKey);
         if (startIdx < 0) startIdx = 0;
@@ -1976,7 +2116,6 @@
           });
         }
 
-        // Natural Japanese summary
         const maxPop = Math.max(...hours.map((h) => h.pop));
         const rainHr = hours.find((h) => h.pop >= 40 || ['rain', 'storm'].includes(h.info.type));
         const snowHr = hours.find((h) => h.info.type === 'snow');
@@ -1989,7 +2128,6 @@
         else summary = `おおむね穏やかな空模様が続く見込みです。この先の気温は${minH}°〜${maxH}°の予想です。`;
         document.getElementById('hourly-summary').textContent = summary;
 
-        // Render hourly top & temps
         document.getElementById('hourly-top').innerHTML = hours.map((h) => `
           <div class="hourly-top-cell">
             <span class="hourly-time ${h.isNow ? 'is-now' : ''}">${h.label}</span>
@@ -2002,13 +2140,12 @@
           <div class="hourly-temp-cell">${h.temp}°</div>
         `).join('');
 
-        // Render Luminous Monotone Cubic Bezier Sparkline
         const tMin = Math.min(...hours.map((h) => h.temp));
         const tMax = Math.max(...hours.map((h) => h.temp));
         const span = Math.max(2, tMax - tMin);
         const pts = hours.map((h, i) => {
           const xPct = ((i + 0.5) / 9) * 100;
-          const yPct = 80 - ((h.temp - tMin) / span) * 60; // 20%..80%
+          const yPct = 80 - ((h.temp - tMin) / span) * 60;
           return { x: xPct * 9, y: yPct, xPct, yPct, isNow: h.isNow };
         });
 
@@ -2033,7 +2170,6 @@
           `<div class="spark-dot ${p.isNow ? 'is-now' : ''}" style="left:${p.xPct.toFixed(3)}%;top:${p.yPct.toFixed(2)}%;"></div>`
         ).join('');
 
-        // Render 7-Day Forecast
         const weekMin = Math.min(...data.daily.temperature_2m_min.slice(0, 7));
         const weekMax = Math.max(...data.daily.temperature_2m_max.slice(0, 7));
         const weekSpan = Math.max(1, weekMax - weekMin);
@@ -2246,8 +2382,8 @@
          =================================================================== */
       const RADAR = {
         map: null,
-        frames: [],       // { ts, label, isForecast, layer }
-        cloudFrames: [],  // { ts, layer }
+        frames: [],
+        cloudFrames: [],
         activeIdx: -1,
         activeCloudIdx: -1,
         loopStartMs: performance.now(),
@@ -2302,7 +2438,6 @@
         labelPane.style.zIndex = '550';
         labelPane.style.pointerEvents = 'none';
 
-        // 3-tier API-key-free minimal base map fallback
         const baseSources = [
           {
             url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
@@ -2343,7 +2478,6 @@
         }
         mountBaseLayer(0);
 
-        // White neon dashed range rings (50km / 120km)
         [50000, 120000].forEach((radius, idx) => {
           L.circle([CONFIG.lat, CONFIG.lon], {
             pane: 'ringPane',
@@ -2355,7 +2489,6 @@
           }).addTo(map);
         });
 
-        // Yokohama pulse marker
         L.marker([CONFIG.lat, CONFIG.lon], {
           pane: 'labelPane',
           interactive: false,
@@ -2367,7 +2500,6 @@
           })
         }).addTo(map);
 
-        // Minimal city labels
         const cities = [
           { name: CONFIG.cityName, lat: CONFIG.lat - 0.14, lon: CONFIG.lon + 0.08, home: true },
           { name: '東京', lat: 35.69, lon: 139.77, home: false },
@@ -2528,13 +2660,12 @@
             };
           });
 
-          replaceFrames(layers, '気象庁ナウキャスト');
+          replaceFrames(layers, '気象庁');
           return;
         } catch (err) {
           console.warn('JMA Nowcast fallback to RainViewer:', err);
         }
 
-        // Fallback: RainViewer API
         try {
           const rv = await fetchJson('https://api.rainviewer.com/public/weather-maps.json', 8000);
           const host = rv.host || 'https://tilecache.rainviewer.com';
@@ -2617,23 +2748,14 @@
       };
 
       const WORLD_PATHS = [
-        // North America
         'M 22 30 L 42 22 L 70 22 L 98 30 L 116 42 L 106 58 L 92 66 L 84 82 L 76 88 L 66 78 L 54 68 L 44 54 L 30 44 Z',
-        // Greenland
         'M 122 14 L 148 12 L 154 26 L 140 36 L 126 30 Z',
-        // South America
         'M 94 94 L 114 96 L 130 112 L 126 132 L 112 152 L 102 162 L 96 146 L 94 122 L 88 106 Z',
-        // Europe
         'M 170 30 L 194 24 L 214 30 L 212 46 L 196 52 L 178 52 L 168 42 Z',
-        // Africa
         'M 168 62 L 196 58 L 218 68 L 228 86 L 218 112 L 204 138 L 190 136 L 182 110 L 168 92 L 162 76 Z',
-        // Asia
         'M 212 24 L 266 20 L 316 28 L 336 40 L 320 56 L 302 68 L 288 86 L 274 82 L 260 92 L 246 78 L 226 68 L 214 52 Z',
-        // Japan
         'M 314 52 L 322 48 L 326 56 L 318 64 L 311 62 Z',
-        // Southeast Asia / Indonesia
         'M 278 96 L 296 98 L 308 104 L 288 106 Z',
-        // Australia
         'M 294 114 L 322 112 L 334 128 L 324 144 L 302 142 L 292 128 Z'
       ];
 
@@ -2670,9 +2792,8 @@
         const yx = projLon(CONFIG.lon);
         const yy = projLat(CONFIG.lat);
 
-        // Compute predicted sine-like orbital track (~92.7 min period, 51.6 deg inclination)
         const inc = 51.6;
-        const omega = (2 * Math.PI) / 5560; // rad/s
+        const omega = (2 * Math.PI) / 5560;
         const clampedRatio = Math.max(-0.999, Math.min(0.999, ISS.lat / inc));
         let phase = Math.asin(clampedRatio);
         if (ISS.dLatPerSec < 0) phase = Math.PI - phase;
@@ -2771,7 +2892,7 @@
       }
 
       /* ===================================================================
-         7. REAL-TIME EARTHQUAKE MONITOR (P2P QUAKE API)
+         7. REAL-TIME EARTHQUAKE MONITOR (P2P QUAKE API + NIGHT WAKE ALERT)
          =================================================================== */
       function scaleToDisplay(scale) {
         const map = {
@@ -2799,8 +2920,15 @@
 
       function formatQuakeTime(str) {
         if (!str) return '--/-- --:--';
-        // e.g. "2026/11/19 18:12:00"
         return str.slice(5, 16);
+      }
+
+      function parseP2pTimeMs(str) {
+        if (!str) return 0;
+        // "2026/11/19 18:12:00" (JST)
+        const iso = str.replace(/\//g, '-').replace(' ', 'T') + '+09:00';
+        const t = Date.parse(iso);
+        return Number.isNaN(t) ? 0 : t;
       }
 
       function renderQuakes(items) {
@@ -2812,6 +2940,15 @@
         const tsunami = tsunamiLabel(eq.domesticTsunami);
         const mag = hypo.magnitude != null && hypo.magnitude >= 0 ? `M${Number(hypo.magnitude).toFixed(1)}` : 'M--';
         const depth = hypo.depth != null && hypo.depth >= 0 ? (hypo.depth === 0 ? 'ごく浅い' : `深さ ${hypo.depth}km`) : '深さ不明';
+
+        // Wake up earthquake card during night dim if Shindo 3+ occurred recently
+        const quakeCard = document.getElementById('quake-card');
+        const eqTimeMs = parseP2pTimeMs(eq.time);
+        const isRecentStrong = (eq.maxScale >= CONFIG.quakeWakeMinScale) &&
+                               (Date.now() - eqTimeMs <= CONFIG.quakeWakeDurationMin * 60 * 1000);
+        if (quakeCard) {
+          quakeCard.classList.toggle('quake-alert-wake', Boolean(isRecentStrong || tsunami.warn));
+        }
 
         document.getElementById('quake-featured').innerHTML = `
           <div class="shindo-badge-lg ${shindo.cls}">
@@ -2866,6 +3003,16 @@
           themeBtn.textContent = THEME_ORDER[themeIdx].label;
           themeBtn.classList.toggle('is-active', STATE.themeOverride !== 'auto');
           applyAutoTheme();
+        });
+
+        const dimBtn = document.getElementById('dim-toggle-btn');
+        let dimIdx = 0;
+        dimBtn.addEventListener('click', () => {
+          dimIdx = (dimIdx + 1) % DIM_ORDER.length;
+          STATE.nightDimMode = DIM_ORDER[dimIdx].id;
+          dimBtn.textContent = DIM_ORDER[dimIdx].label;
+          dimBtn.classList.toggle('is-active', STATE.nightDimMode !== 'off');
+          applyNightDim(new Date());
         });
 
         const cloudBtn = document.getElementById('cloud-toggle-btn');
