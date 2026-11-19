@@ -1,0 +1,3611 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather &amp; Radar Signage Dashboard</title>
+
+  <style>
+    /* =========================================================================
+       1. RESET & STRICT 100vw x 100vh FULL-VIEWPORT FOUNDATION
+       ========================================================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+        "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Inter", sans-serif;
+
+      /* Dynamic Sky & Frosted Glass Tokens (updated per sky theme) */
+      --sky-grad: linear-gradient(155deg, #071329 0%, #0d1f44 48%, #142c5c 100%);
+      --glass-bg: rgba(12, 24, 52, 0.36);
+      --glass-bg-deep: rgba(7, 15, 34, 0.56);
+      --glass-border: rgba(255, 255, 255, 0.44);
+      --glass-divider: rgba(255, 255, 255, 0.16);
+      --glass-shadow:
+        0 0 14px rgba(255, 255, 255, 0.17),
+        0 0 30px rgba(210, 236, 255, 0.10),
+        0 10px 30px rgba(0, 0, 0, 0.30),
+        inset 0 1px 0 rgba(255, 255, 255, 0.52),
+        inset 0 0 18px rgba(255, 255, 255, 0.06);
+
+      /* White Neon Text Glow Tokens */
+      --glow-hero: 0 0 12px rgba(255, 255, 255, 0.72), 0 0 28px rgba(215, 240, 255, 0.38);
+      --glow-soft: 0 0 8px rgba(255, 255, 255, 0.48), 0 0 16px rgba(205, 235, 255, 0.22);
+      --glow-cyan: 0 0 8px rgba(100, 210, 255, 0.80), 0 0 18px rgba(100, 210, 255, 0.38);
+      --accent-cyan: #64D2FF;
+    }
+
+    /* Dynamic Weather & Time-of-Day Sky Palettes */
+    body[data-theme="clear-day"] {
+      --sky-grad: linear-gradient(158deg, #0c4d9c 0%, #1d75cf 46%, #459be6 100%);
+      --glass-bg: rgba(10, 38, 86, 0.34);
+      --glass-bg-deep: rgba(8, 28, 66, 0.52);
+      --glass-border: rgba(255, 255, 255, 0.54);
+    }
+
+    body[data-theme="sunrise"] {
+      --sky-grad: linear-gradient(160deg, #1d2b64 0%, #7d4577 45%, #d97a54 82%, #f0b26c 100%);
+      --glass-bg: rgba(34, 22, 54, 0.36);
+      --glass-bg-deep: rgba(24, 15, 42, 0.56);
+      --glass-border: rgba(255, 244, 235, 0.52);
+    }
+
+    body[data-theme="sunset"] {
+      --sky-grad: linear-gradient(162deg, #12183a 0%, #4d295e 42%, #b54754 78%, #df7e46 100%);
+      --glass-bg: rgba(28, 16, 46, 0.38);
+      --glass-bg-deep: rgba(18, 10, 32, 0.58);
+      --glass-border: rgba(255, 240, 238, 0.50);
+    }
+
+    body[data-theme="clear-night"] {
+      --sky-grad: linear-gradient(160deg, #040917 0%, #0a1834 52%, #132854 100%);
+      --glass-bg: rgba(11, 22, 48, 0.38);
+      --glass-bg-deep: rgba(6, 13, 30, 0.58);
+      --glass-border: rgba(255, 255, 255, 0.44);
+    }
+
+    body[data-theme="cloudy"] {
+      --sky-grad: linear-gradient(160deg, #273447 0%, #3d4f68 50%, #556882 100%);
+      --glass-bg: rgba(18, 26, 40, 0.40);
+      --glass-bg-deep: rgba(12, 18, 30, 0.58);
+      --glass-border: rgba(255, 255, 255, 0.48);
+    }
+
+    body[data-theme="rain"] {
+      --sky-grad: linear-gradient(162deg, #0d1624 0%, #1c2c42 50%, #2b3f57 100%);
+      --glass-bg: rgba(10, 18, 34, 0.44);
+      --glass-bg-deep: rgba(7, 13, 25, 0.62);
+      --glass-border: rgba(226, 244, 255, 0.46);
+    }
+
+    body[data-theme="snow"] {
+      --sky-grad: linear-gradient(160deg, #2b4363 0%, #48678a 50%, #718ead 100%);
+      --glass-bg: rgba(16, 30, 50, 0.38);
+      --glass-bg-deep: rgba(11, 22, 38, 0.54);
+      --glass-border: rgba(255, 255, 255, 0.58);
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: var(--font-sans);
+      color: #ffffff;
+      background: #050b1a;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    .tabular {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ellipsis {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* =========================================================================
+       2. ANIMATED SKY BACKGROUND & LIGHTNING LAYER
+       ========================================================================= */
+    .sky-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: var(--sky-grad);
+      transition: background 1.2s ease;
+    }
+
+    .sky-aura {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 68% 48% at 24% 8%, rgba(255, 255, 255, 0.14), transparent 68%),
+        radial-gradient(ellipse 52% 42% at 84% 86%, rgba(165, 215, 255, 0.10), transparent 70%);
+    }
+
+    #sky-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    #lightning-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: rgba(235, 246, 255, 0.32);
+      opacity: 0;
+      transition: opacity 0.14s ease-out;
+    }
+
+    /* =========================================================================
+       3. MAIN 2-COLUMN DASHBOARD LAYOUT (50% / 50%)
+       ========================================================================= */
+    .dashboard {
+      position: relative;
+      z-index: 2;
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(8px, 1vw, 14px);
+      padding: clamp(10px, 1.2vh, 18px) clamp(12px, 1.3vw, 20px);
+      overflow: hidden;
+    }
+
+    /* Left Column: Row 2 (Hourly) expanded, Row 3 (7-Day & Calendar) compact ~3/4 */
+    .left-col {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1.08fr) minmax(0, 1.06fr) auto;
+      gap: clamp(7px, 0.85vh, 13px);
+      overflow: hidden;
+    }
+
+    /* Right Column: Large Radar Map (~60%) + ISS & Quake Monitor (~40%) */
+    .right-col {
+      display: grid;
+      grid-template-rows: minmax(0, 1.48fr) minmax(0, 1fr);
+      gap: clamp(7px, 0.85vh, 13px);
+      overflow: hidden;
+    }
+
+    /* =========================================================================
+       4. WHITE NEON iOS GLASSMORPHISM CARD SYSTEM
+       ========================================================================= */
+    .glass-card {
+      position: relative;
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(22px) saturate(170%);
+      backdrop-filter: blur(22px) saturate(170%);
+      border: 1px solid var(--glass-border);
+      border-radius: clamp(14px, 1.5vh, 18px);
+      box-shadow: var(--glass-shadow);
+      overflow: hidden;
+      transition: background-color 0.9s ease, border-color 0.9s ease;
+    }
+
+    /* Luminous Top Specular Edge */
+    .glass-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 8%;
+      right: 8%;
+      height: 1px;
+      pointer-events: none;
+      z-index: 4;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.72) 25%,
+        rgba(255, 255, 255, 0.98) 50%,
+        rgba(255, 255, 255, 0.72) 75%,
+        transparent 100%
+      );
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.75);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: clamp(4px, 0.55vh, 7px);
+      margin-bottom: clamp(4px, 0.55vh, 8px);
+      border-bottom: 1px solid var(--glass-divider);
+      font-size: clamp(9.5px, 1.25vh, 13px);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.88);
+      text-shadow: var(--glow-soft);
+      flex-shrink: 0;
+    }
+
+    .card-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .card-title svg {
+      width: clamp(12px, 1.45vh, 15px);
+      height: clamp(12px, 1.45vh, 15px);
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.65));
+    }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: clamp(2px, 0.28vh, 3px) clamp(7px, 0.7vw, 10px);
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      color: rgba(255, 255, 255, 0.94);
+      font-size: clamp(8.5px, 1.05vh, 11px);
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.14);
+    }
+
+    .pill-btn {
+      cursor: pointer;
+      font-family: inherit;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    }
+
+    .pill-btn:hover {
+      background: rgba(255, 255, 255, 0.24);
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.40);
+    }
+
+    .pill-btn:active {
+      transform: scale(0.96);
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 9999px;
+      background: #4ADE80;
+      box-shadow: 0 0 8px #4ADE80, 0 0 14px rgba(74, 222, 128, 0.7);
+      flex-shrink: 0;
+    }
+
+    .live-dot.is-cyan {
+      background: #64D2FF;
+      box-shadow: 0 0 8px #64D2FF, 0 0 14px rgba(100, 210, 255, 0.8);
+    }
+
+    .live-dot.is-amber {
+      background: #FBBF24;
+      box-shadow: 0 0 8px #FBBF24, 0 0 14px rgba(251, 191, 36, 0.8);
+    }
+
+    /* =========================================================================
+       5. LEFT ROW 1: FLOATING HERO CLOCK & CURRENT WEATHER (NO CARD BORDER)
+       ========================================================================= */
+    .hero-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: clamp(10px, 1.2vw, 18px);
+      padding: clamp(2px, 0.3vh, 6px) clamp(4px, 0.5vw, 8px);
+    }
+
+    .hero-clock-wrap {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: clamp(2px, 0.3vh, 5px);
+    }
+
+    .hero-time-row {
+      display: flex;
+      align-items: baseline;
+      gap: clamp(4px, 0.45vw, 8px);
+      line-height: 0.96;
+    }
+
+    .hero-clock {
+      font-size: clamp(32px, 5.8vh, 68px);
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      text-shadow: var(--glow-hero);
+    }
+
+    .hero-seconds {
+      font-size: clamp(13px, 2.05vh, 23px);
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.68);
+      text-shadow: var(--glow-soft);
+    }
+
+    .hero-date {
+      font-size: clamp(11px, 1.65vh, 18px);
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.90);
+      letter-spacing: 0.03em;
+      text-shadow: var(--glow-soft);
+    }
+
+    .hero-weather-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: clamp(10px, 1.15vw, 18px);
+    }
+
+    .hero-weather-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: clamp(1px, 0.25vh, 4px);
+      text-align: right;
+    }
+
+    .hero-loc-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: clamp(13px, 1.9vh, 21px);
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+    }
+
+    .hero-loc-row svg {
+      width: clamp(11px, 1.45vh, 16px);
+      height: clamp(11px, 1.45vh, 16px);
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.7));
+    }
+
+    .hero-cond-hl {
+      font-size: clamp(10px, 1.38vh, 15px);
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.92);
+      text-shadow: var(--glow-soft);
+    }
+
+    .hero-submetrics {
+      font-size: clamp(9px, 1.18vh, 13px);
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.78);
+      letter-spacing: 0.02em;
+    }
+
+    .hero-temp {
+      font-size: clamp(40px, 7.2vh, 84px);
+      font-weight: 200;
+      line-height: 0.92;
+      letter-spacing: -0.04em;
+      color: #ffffff;
+      text-shadow: var(--glow-hero);
+      flex-shrink: 0;
+    }
+
+    /* =========================================================================
+       6. LEFT ROW 2: EXPANDED HOURLY FORECAST + LUMINOUS TEMP SPARKLINE
+       ========================================================================= */
+    .hourly-card {
+      padding: clamp(7px, 1vh, 13px) clamp(10px, 1.1vw, 15px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hourly-summary {
+      font-size: clamp(9.5px, 1.35vh, 14.5px);
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: var(--glow-soft);
+      padding-bottom: clamp(4px, 0.55vh, 7px);
+      margin-bottom: clamp(5px, 0.7vh, 10px);
+      border-bottom: 1px solid var(--glass-divider);
+      flex-shrink: 0;
+    }
+
+    .hourly-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: clamp(3px, 0.55vh, 8px);
+      overflow: hidden;
+    }
+
+    .hourly-top-grid,
+    .hourly-temp-grid {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .hourly-top-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: clamp(2px, 0.42vh, 6px);
+    }
+
+    .hourly-time {
+      font-size: clamp(9px, 1.25vh, 13.5px);
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.82);
+      line-height: 1;
+    }
+
+    .hourly-time.is-now {
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+    }
+
+    .hourly-icon {
+      width: clamp(22px, 3.2vh, 38px);
+      height: clamp(22px, 3.2vh, 38px);
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.25));
+    }
+
+    .hourly-pop {
+      height: clamp(11px, 1.35vh, 15px);
+      font-size: clamp(8.5px, 1.12vh, 12px);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--accent-cyan);
+      text-shadow: var(--glow-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hourly-pop.is-empty {
+      visibility: hidden;
+    }
+
+    /* Luminous Monotone Cubic Bezier Temperature Sparkline */
+    .hourly-spark-wrap {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      min-height: 30px;
+      max-height: clamp(54px, 13.5vh, 150px);
+      margin: auto 0;
+    }
+
+    .hourly-spark-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+
+    .hourly-spark-dots {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .spark-dot {
+      position: absolute;
+      width: clamp(6px, 0.85vh, 9px);
+      height: clamp(6px, 0.85vh, 9px);
+      border-radius: 9999px;
+      background: #ffffff;
+      border: 1.5px solid rgba(190, 232, 255, 0.95);
+      transform: translate(-50%, -50%);
+      box-shadow:
+        0 0 6px #ffffff,
+        0 0 14px rgba(255, 255, 255, 0.84),
+        0 0 22px rgba(100, 210, 255, 0.45);
+    }
+
+    .spark-dot.is-now {
+      width: clamp(8px, 1.1vh, 11.5px);
+      height: clamp(8px, 1.1vh, 11.5px);
+      border: 2px solid #ffffff;
+      background: var(--accent-cyan);
+      box-shadow:
+        0 0 8px #ffffff,
+        0 0 16px rgba(100, 210, 255, 0.95),
+        0 0 26px rgba(255, 255, 255, 0.78);
+    }
+
+    .hourly-temp-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hourly-temp {
+      font-size: clamp(12px, 1.85vh, 20px);
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+      line-height: 1.05;
+    }
+
+    .hourly-temp.is-now {
+      font-weight: 700;
+      text-shadow: var(--glow-hero);
+    }
+
+    /* =========================================================================
+       7. LEFT ROW 3: COMPACT 7-DAY FORECAST & MONTHLY CALENDAR (~3/4 HEIGHT)
+       ========================================================================= */
+    .left-mid-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+      gap: clamp(8px, 1vw, 14px);
+      overflow: hidden;
+    }
+
+    .left-mid-split .card-header {
+      padding-bottom: clamp(3px, 0.4vh, 6px);
+      margin-bottom: clamp(3px, 0.4vh, 6px);
+      font-size: clamp(9px, 1.18vh, 12.5px);
+    }
+
+    /* 7-Day Forecast */
+    .weekly-card {
+      padding: clamp(6px, 0.8vh, 11px) clamp(9px, 1vw, 13px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .weekly-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .weekly-row {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 2.2em clamp(32px, 3.6vw, 44px) 2.1em minmax(0, 1fr) 2.1em;
+      align-items: center;
+      gap: 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .weekly-row:first-child {
+      border-top: none;
+    }
+
+    .weekly-day {
+      font-size: clamp(9px, 1.24vh, 13.5px);
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.90);
+      line-height: 1;
+    }
+
+    .weekly-day.is-today {
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+    }
+
+    .weekly-icon-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      line-height: 1;
+    }
+
+    .weekly-icon {
+      width: clamp(14px, 1.75vh, 20px);
+      height: clamp(14px, 1.75vh, 20px);
+      flex-shrink: 0;
+    }
+
+    .weekly-pop {
+      font-size: clamp(7.2px, 0.92vh, 10px);
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-shadow: 0 0 6px rgba(100, 210, 255, 0.6);
+    }
+
+    .weekly-min {
+      font-size: clamp(9px, 1.2vh, 13px);
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.62);
+      text-align: right;
+      line-height: 1;
+    }
+
+    .weekly-max {
+      font-size: clamp(9px, 1.2vh, 13px);
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+      text-align: left;
+      line-height: 1;
+    }
+
+    .temp-track {
+      position: relative;
+      width: 100%;
+      height: clamp(4px, 0.48vh, 5px);
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .temp-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 99px;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.24);
+    }
+
+    .temp-now-dot {
+      position: absolute;
+      top: 50%;
+      width: 7.5px;
+      height: 7.5px;
+      border-radius: 9999px;
+      background: #ffffff;
+      border: 1.5px solid rgba(8, 16, 36, 0.72);
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px #ffffff, 0 0 14px rgba(255, 255, 255, 0.9);
+    }
+
+    /* Monthly Calendar */
+    .calendar-card {
+      padding: clamp(6px, 0.8vh, 11px) clamp(8px, 0.95vw, 12px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      text-align: center;
+      font-size: clamp(8px, 1.05vh, 11.5px);
+      font-weight: 600;
+      margin-bottom: clamp(1px, 0.28vh, 4px);
+      flex-shrink: 0;
+    }
+
+    .cal-wd-sun { color: #FF7B89; }
+    .cal-wd-sat { color: #7CC8FF; }
+    .cal-wd-mid { color: rgba(255, 255, 255, 0.72); }
+
+    .cal-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      grid-template-rows: repeat(6, minmax(0, 1fr));
+      place-items: center;
+    }
+
+    .cal-day {
+      width: clamp(16px, 2.2vh, 27px);
+      height: clamp(16px, 2.2vh, 27px);
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(8.5px, 1.18vh, 13px);
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.92);
+      line-height: 1;
+    }
+
+    .cal-day.is-out {
+      color: rgba(255, 255, 255, 0.24);
+      font-weight: 400;
+    }
+
+    .cal-day.is-sun,
+    .cal-day.is-holiday {
+      color: #FF7B89;
+      font-weight: 600;
+    }
+
+    .cal-day.is-sat {
+      color: #7CC8FF;
+      font-weight: 600;
+    }
+
+    .cal-day.is-today {
+      background: #ffffff;
+      color: #081226;
+      font-weight: 700;
+      box-shadow:
+        0 0 12px rgba(255, 255, 255, 0.96),
+        0 0 24px rgba(255, 255, 255, 0.50);
+    }
+
+    /* =========================================================================
+       8. LEFT ROW 4: SUNRISE/SUNSET & MOON PHASE WIDGETS
+       ========================================================================= */
+    .left-astro-split {
+      height: clamp(96px, 13.6vh, 138px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(8px, 1vw, 14px);
+      overflow: hidden;
+    }
+
+    .astro-card {
+      padding: clamp(6px, 0.8vh, 10px) clamp(9px, 1vw, 13px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .astro-card .card-header {
+      padding-bottom: clamp(3px, 0.35vh, 5px);
+      margin-bottom: clamp(4px, 0.45vh, 6px);
+      font-size: clamp(8.5px, 1.12vh, 12px);
+    }
+
+    .astro-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(6px, 0.7vw, 10px);
+    }
+
+    .astro-moon-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(8px, 0.9vw, 14px);
+    }
+
+    .sun-arc-svg {
+      width: 100%;
+      height: 100%;
+      max-height: clamp(54px, 8.2vh, 88px);
+      display: block;
+      overflow: visible;
+    }
+
+    .moon-svg {
+      width: clamp(48px, 7.2vh, 76px);
+      height: clamp(48px, 7.2vh, 76px);
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.55));
+    }
+
+    .astro-metrics {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: clamp(2px, 0.3vh, 4px);
+    }
+
+    .astro-pair-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .astro-label {
+      font-size: clamp(8px, 1.02vh, 11px);
+      color: rgba(255, 255, 255, 0.68);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .astro-val {
+      font-size: clamp(10.5px, 1.48vh, 16px);
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+      white-space: nowrap;
+    }
+
+    .astro-sub {
+      font-size: clamp(7.8px, 0.98vh, 10.5px);
+      color: rgba(255, 255, 255, 0.78);
+      line-height: 1.25;
+    }
+
+    .moon-phase-name {
+      font-size: clamp(11px, 1.55vh, 16.5px);
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+      line-height: 1.1;
+    }
+
+    /* =========================================================================
+       9. RIGHT ROW 1: MINIMALIST DARK PRECIPITATION RADAR MAP
+       ========================================================================= */
+    .radar-card {
+      padding: clamp(7px, 0.9vh, 12px) clamp(9px, 1vw, 14px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .radar-header-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .radar-stage {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      border-radius: clamp(10px, 1.1vh, 13px);
+      overflow: hidden;
+      background: #061024;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.45);
+    }
+
+    #radar-map {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #061024;
+    }
+
+    /* Leaflet overrides for clean signage presentation */
+    .leaflet-container {
+      background: #061024 !important;
+      font-family: var(--font-sans) !important;
+    }
+
+    .leaflet-control-attribution {
+      background: rgba(5, 11, 26, 0.55) !important;
+      color: rgba(255, 255, 255, 0.45) !important;
+      font-size: 9px !important;
+      padding: 1px 5px !important;
+      border-top-left-radius: 6px;
+    }
+
+    .leaflet-control-attribution a {
+      color: rgba(255, 255, 255, 0.58) !important;
+      text-decoration: none;
+    }
+
+    /* Ultra-minimal Dark Basemap CSS Filter Tiers */
+    .dark-base-tiles {
+      filter: brightness(0.92) contrast(1.24) sepia(0.35) hue-rotate(186deg) saturate(1.75);
+    }
+
+    .light-base-fallback {
+      filter: invert(1) brightness(0.80) contrast(1.22) sepia(0.30) hue-rotate(185deg) saturate(1.85);
+    }
+
+    .gsi-blank-fallback {
+      filter: invert(1) brightness(0.66) contrast(1.30) sepia(0.34) hue-rotate(188deg) saturate(1.90);
+    }
+
+    /* Smooth radar crossfade */
+    .radar-tile-layer {
+      transition: opacity 0.35s ease;
+    }
+
+    /* Apple Maps-style pulsing blue dot at Yokohama */
+    .home-pulse-marker {
+      position: relative;
+      width: 24px;
+      height: 24px;
+    }
+
+    .home-pulse-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.42);
+      animation: radarPulse 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+
+    .home-pulse-core {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 11px;
+      height: 11px;
+      transform: translate(-50%, -50%);
+      border-radius: 9999px;
+      background: #0A84FF;
+      border: 2.2px solid #ffffff;
+      box-shadow: 0 0 10px #38BDF8, 0 0 18px rgba(255, 255, 255, 0.85);
+    }
+
+    @keyframes radarPulse {
+      0% { transform: scale(0.5); opacity: 0.9; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+
+    .minimal-city-label {
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.92), 0 0 8px rgba(255, 255, 255, 0.22);
+      white-space: nowrap;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+    }
+
+    .minimal-city-label.is-home {
+      color: rgba(255, 255, 255, 0.90);
+      font-weight: 600;
+      text-shadow: 0 0 8px rgba(100, 210, 255, 0.8), 0 1px 4px rgba(0, 0, 0, 0.95);
+    }
+
+    /* Floating Radar Overlays */
+    .radar-time-pill {
+      position: absolute;
+      top: clamp(8px, 1vh, 12px);
+      left: clamp(8px, 1vw, 12px);
+      z-index: 650;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: clamp(4px, 0.5vh, 6px) clamp(9px, 0.9vw, 13px);
+      border-radius: 9999px;
+      background: rgba(7, 15, 34, 0.72);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.42);
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.16), 0 4px 12px rgba(0, 0, 0, 0.35);
+      font-size: clamp(9.5px, 1.25vh, 13px);
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+      pointer-events: none;
+    }
+
+    .radar-bottom-bar {
+      position: absolute;
+      left: clamp(8px, 0.9vw, 12px);
+      right: clamp(8px, 0.9vw, 12px);
+      bottom: clamp(16px, 2vh, 22px);
+      z-index: 650;
+      display: flex;
+      align-items: center;
+      gap: clamp(8px, 0.9vw, 12px);
+      padding: clamp(5px, 0.65vh, 8px) clamp(10px, 1vw, 14px);
+      border-radius: 9999px;
+      background: rgba(7, 15, 34, 0.74);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.36);
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.14), 0 4px 14px rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+    }
+
+    .radar-edge-time {
+      font-size: clamp(8.5px, 1.1vh, 11.5px);
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .radar-progress-track {
+      position: relative;
+      flex: 1;
+      height: 5px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .radar-progress-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, rgba(165, 224, 255, 0.75) 0%, #ffffff 100%);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.85);
+    }
+
+    .radar-playhead {
+      position: absolute;
+      top: 50%;
+      left: 0%;
+      width: 11px;
+      height: 11px;
+      border-radius: 9999px;
+      background: #ffffff;
+      transform: translate(-50%, -50%);
+      box-shadow:
+        0 0 8px #ffffff,
+        0 0 16px rgba(255, 255, 255, 0.95),
+        0 0 24px rgba(100, 210, 255, 0.8);
+    }
+
+    .radar-legend {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      font-size: clamp(8px, 1vh, 10.5px);
+      color: rgba(255, 255, 255, 0.76);
+    }
+
+    .radar-legend-bar {
+      width: clamp(36px, 4.2vw, 62px);
+      height: 5px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #93C5FD 0%, #2563EB 25%, #22C55E 50%, #FACC15 72%, #EF4444 88%, #D946EF 100%);
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.28);
+    }
+
+    /* =========================================================================
+       10. RIGHT ROW 2: ISS TRACKER & P2P EARTHQUAKE MONITOR
+       ========================================================================= */
+    .right-bottom-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(8px, 1vw, 14px);
+      overflow: hidden;
+    }
+
+    .sub-panel {
+      padding: clamp(7px, 0.9vh, 11px) clamp(9px, 1vw, 13px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ISS Tracker */
+    .iss-map-wrap {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      border-radius: clamp(8px, 0.9vh, 11px);
+      overflow: hidden;
+      background: radial-gradient(ellipse at 50% 45%, #0c1d3d 0%, #050d20 100%);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      margin-bottom: clamp(5px, 0.65vh, 8px);
+    }
+
+    .iss-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .iss-region-pill {
+      position: absolute;
+      top: 6px;
+      left: 7px;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: rgba(6, 14, 32, 0.76);
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      font-size: clamp(8px, 1.02vh, 11px);
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.94);
+      text-shadow: var(--glow-soft);
+      pointer-events: none;
+    }
+
+    .iss-telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(4px, 0.5vh, 6px);
+      flex-shrink: 0;
+    }
+
+    .iss-stat-box {
+      padding: clamp(3px, 0.45vh, 5px) clamp(6px, 0.65vw, 9px);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .iss-stat-label {
+      font-size: clamp(7.5px, 0.92vh, 10px);
+      color: rgba(255, 255, 255, 0.62);
+      line-height: 1.1;
+    }
+
+    .iss-stat-val {
+      font-size: clamp(9.5px, 1.25vh, 13.5px);
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+      line-height: 1.15;
+    }
+
+    @keyframes issPulseAnim {
+      0% { r: 4; opacity: 0.95; }
+      100% { r: 15; opacity: 0; }
+    }
+
+    .iss-pulse-circle {
+      animation: issPulseAnim 2.2s ease-out infinite;
+    }
+
+    /* P2P Earthquake Monitor */
+    .quake-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(5px, 0.65vh, 8px);
+      overflow: hidden;
+    }
+
+    .quake-hero {
+      display: flex;
+      align-items: center;
+      gap: clamp(8px, 0.85vw, 12px);
+      padding: clamp(6px, 0.8vh, 10px) clamp(8px, 0.85vw, 11px);
+      border-radius: clamp(10px, 1vh, 12px);
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.32);
+      flex-shrink: 0;
+    }
+
+    .quake-scale-box {
+      width: clamp(44px, 5.4vh, 62px);
+      height: clamp(44px, 5.4vh, 62px);
+      border-radius: clamp(9px, 1vh, 12px);
+      border: 1.5px solid rgba(255, 255, 255, 0.72);
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.34);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .quake-scale-cap {
+      font-size: clamp(7px, 0.85vh, 9px);
+      font-weight: 600;
+      opacity: 0.92;
+      margin-bottom: 2px;
+    }
+
+    .quake-scale-num {
+      font-size: clamp(16px, 2.5vh, 26px);
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.55);
+    }
+
+    .quake-hero-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2px, 0.3vh, 4px);
+    }
+
+    .quake-epicenter {
+      font-size: clamp(11px, 1.55vh, 16.5px);
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+      line-height: 1.15;
+    }
+
+    .quake-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: clamp(8.5px, 1.1vh, 12px);
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .quake-tsunami-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 7px;
+      border-radius: 9999px;
+      font-size: clamp(7.5px, 0.96vh, 10.5px);
+      font-weight: 600;
+      white-space: nowrap;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+    }
+
+    .quake-tsunami-badge.is-safe {
+      background: rgba(16, 185, 129, 0.22);
+      color: #A7F3D0;
+      border-color: rgba(110, 231, 183, 0.45);
+    }
+
+    .quake-tsunami-badge.is-warn {
+      background: rgba(239, 68, 68, 0.32);
+      color: #FECACA;
+      border-color: rgba(252, 165, 165, 0.72);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.55);
+    }
+
+    .quake-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: clamp(2px, 0.35vh, 5px);
+      overflow: hidden;
+    }
+
+    .quake-row {
+      flex: 1;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: clamp(5px, 0.6vw, 8px);
+      padding: 0 clamp(6px, 0.6vw, 9px);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.055);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+    }
+
+    .quake-row-time {
+      font-size: clamp(8px, 1.02vh, 11px);
+      color: rgba(255, 255, 255, 0.64);
+      white-space: nowrap;
+    }
+
+    .quake-row-name {
+      font-size: clamp(9px, 1.16vh, 12.5px);
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .quake-row-mag {
+      font-size: clamp(8.5px, 1.08vh, 11.5px);
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.78);
+      white-space: nowrap;
+    }
+
+    .quake-mini-badge {
+      min-width: clamp(22px, 2.5vh, 28px);
+      height: clamp(16px, 2vh, 22px);
+      padding: 0 4px;
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(8px, 1.05vh, 11px);
+      font-weight: 700;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.42);
+    }
+  </style>
+</head>
+<body data-theme="clear-night">
+  <!-- Dynamic Animated Sky Layers -->
+  <div class="sky-backdrop" aria-hidden="true"></div>
+  <div class="sky-aura" aria-hidden="true"></div>
+  <canvas id="sky-canvas" aria-hidden="true"></canvas>
+  <div id="lightning-flash" aria-hidden="true"></div>
+
+  <!-- Main 100vw x 100vh Signage Dashboard -->
+  <main class="dashboard">
+    <!-- ==================== LEFT COLUMN ==================== -->
+    <section class="left-col">
+      <!-- Row 1: Floating Hero Clock & Current Weather -->
+      <header class="hero-bar">
+        <div class="hero-clock-wrap">
+          <div class="hero-time-row">
+            <span id="hero-clock" class="hero-clock tabular">--:--</span>
+            <span id="hero-seconds" class="hero-seconds tabular">00</span>
+          </div>
+          <div id="hero-date" class="hero-date tabular">----年--月--日 (-)</div>
+        </div>
+
+        <div class="hero-weather-wrap">
+          <div class="hero-weather-meta">
+            <div class="hero-loc-row">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
+              </svg>
+              <span id="city-name">横浜</span>
+            </div>
+            <div class="hero-cond-hl tabular">
+              <span id="current-condition">晴れ</span>
+              &nbsp;最高 <span id="today-high">--°</span>&nbsp;最低 <span id="today-low">--°</span>
+            </div>
+            <div id="hero-submetrics" class="hero-submetrics tabular">体感 --° ・ 湿度 --% ・ 風速 --m/s</div>
+          </div>
+          <div id="current-temp" class="hero-temp tabular">--°</div>
+        </div>
+      </header>
+
+      <!-- Row 2: Expanded Hourly Forecast with Luminous Bezier Sparkline -->
+      <article class="glass-card hourly-card">
+        <div id="hourly-summary" class="hourly-summary ellipsis">
+          最新の天気予報を取得しています...
+        </div>
+        <div class="hourly-body">
+          <div id="hourly-top-grid" class="hourly-top-grid"></div>
+
+          <div class="hourly-spark-wrap">
+            <svg id="hourly-spark-svg" viewBox="0 0 900 100" preserveAspectRatio="none" class="hourly-spark-svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="spark-area-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="rgba(255, 255, 255, 0.25)" />
+                  <stop offset="70%" stop-color="rgba(165, 224, 255, 0.06)" />
+                  <stop offset="100%" stop-color="rgba(255, 255, 255, 0.00)" />
+                </linearGradient>
+              </defs>
+              <g id="hourly-spark-guides"></g>
+              <path id="hourly-spark-area" d="" fill="url(#spark-area-grad)" />
+              <path id="hourly-spark-glow" d="" fill="none" stroke="rgba(255, 255, 255, 0.36)" stroke-width="7" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+              <path id="hourly-spark-line" d="" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+            </svg>
+            <div id="hourly-spark-dots" class="hourly-spark-dots"></div>
+          </div>
+
+          <div id="hourly-temp-grid" class="hourly-temp-grid"></div>
+        </div>
+      </article>
+
+      <!-- Row 3: Compact 7-Day Forecast & Monthly Calendar -->
+      <div class="left-mid-split">
+        <!-- 7-Day Forecast -->
+        <article class="glass-card weekly-card">
+          <div class="card-header">
+            <span class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="3"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              7日間の予報
+            </span>
+            <span id="weather-updated" class="tabular" style="font-size: 0.85em; opacity: 0.7;">--:-- 更新</span>
+          </div>
+          <div id="weekly-list" class="weekly-list"></div>
+        </article>
+
+        <!-- Monthly Calendar -->
+        <article class="glass-card calendar-card">
+          <div class="card-header">
+            <span class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="3"></rect>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <circle cx="8" cy="15" r="1" fill="currentColor"></circle>
+                <circle cx="12" cy="15" r="1" fill="currentColor"></circle>
+                <circle cx="16" cy="15" r="1" fill="currentColor"></circle>
+              </svg>
+              カレンダー
+            </span>
+            <span id="cal-month-label" class="tabular">----年 --月</span>
+          </div>
+          <div class="cal-weekdays">
+            <span class="cal-wd-sun">日</span>
+            <span class="cal-wd-mid">月</span>
+            <span class="cal-wd-mid">火</span>
+            <span class="cal-wd-mid">水</span>
+            <span class="cal-wd-mid">木</span>
+            <span class="cal-wd-mid">金</span>
+            <span class="cal-wd-sat">土</span>
+          </div>
+          <div id="cal-grid" class="cal-grid tabular"></div>
+        </article>
+      </div>
+
+      <!-- Row 4: Sunrise/Sunset & Moon Phase -->
+      <div class="left-astro-split">
+        <!-- Sunrise & Sunset -->
+        <article class="glass-card astro-card">
+          <div class="card-header">
+            <span class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2v3"></path>
+                <path d="m4.93 7.93 2.12 2.12"></path>
+                <path d="m19.07 7.93-2.12 2.12"></path>
+                <path d="M2 17h20"></path>
+                <path d="M7 17a5 5 0 0 1 10 0"></path>
+              </svg>
+              日の出・日の入り
+            </span>
+            <span id="daylight-duration" class="tabular" style="font-size: 0.88em; opacity: 0.8;">日照 --h--m</span>
+          </div>
+          <div class="astro-body">
+            <svg id="sun-arc-svg" viewBox="0 0 160 76" class="sun-arc-svg" aria-hidden="true">
+              <defs>
+                <filter id="sun-glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="2.8" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <!-- Horizon -->
+              <line x1="6" y1="48" x2="154" y2="48" stroke="rgba(255,255,255,0.28)" stroke-width="1" stroke-dasharray="3 3" />
+              <!-- Nighttime arc below horizon -->
+              <path id="sun-night-path" d="" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.8" stroke-linecap="round" />
+              <!-- Daytime glowing arc above horizon -->
+              <path id="sun-day-glow" d="" fill="none" stroke="rgba(255,255,255,0.34)" stroke-width="5" stroke-linecap="round" />
+              <path id="sun-day-path" d="" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+              <!-- Sunrise & Sunset horizon markers -->
+              <circle id="sun-rise-dot" cx="38" cy="48" r="2.6" fill="#FDE68A" />
+              <circle id="sun-set-dot" cx="122" cy="48" r="2.6" fill="#FDBA74" />
+              <!-- Current sun position glowing dot -->
+              <circle id="sun-now-halo" cx="80" cy="18" r="7.5" fill="rgba(255, 255, 255, 0.25)" />
+              <circle id="sun-now-dot" cx="80" cy="18" r="4.2" fill="#FFFFFF" filter="url(#sun-glow)" />
+            </svg>
+            <div class="astro-metrics tabular">
+              <div class="astro-pair-row">
+                <span class="astro-label">日の出</span>
+                <span id="sunrise-time" class="astro-val">--:--</span>
+              </div>
+              <div class="astro-pair-row">
+                <span class="astro-label">日の入</span>
+                <span id="sunset-time" class="astro-val">--:--</span>
+              </div>
+              <div id="sun-countdown" class="astro-sub ellipsis">次の変化を計算中...</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Moon Phase -->
+        <article class="glass-card astro-card">
+          <div class="card-header">
+            <span class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
+              月の満ち欠け
+            </span>
+            <span id="moon-illum-badge" class="tabular" style="font-size: 0.88em; opacity: 0.85;">輝面 --%</span>
+          </div>
+          <div class="astro-moon-body">
+            <svg id="moon-svg" viewBox="0 0 100 100" class="moon-svg" aria-hidden="true">
+              <defs>
+                <clipPath id="moon-disk-clip">
+                  <circle cx="50" cy="50" r="40" />
+                </clipPath>
+                <radialGradient id="moon-lit-grad" cx="38%" cy="34%" r="72%">
+                  <stop offset="0%" stop-color="#FFFFFF" />
+                  <stop offset="72%" stop-color="#E8F1FF" />
+                  <stop offset="100%" stop-color="#BFD4F2" />
+                </radialGradient>
+              </defs>
+              <!-- Soft outer lunar glow -->
+              <circle cx="50" cy="50" r="44" fill="rgba(255, 255, 255, 0.10)" />
+              <!-- Unlit dark side -->
+              <circle cx="50" cy="50" r="40" fill="rgba(10, 20, 44, 0.82)" stroke="rgba(255, 255, 255, 0.45)" stroke-width="1.4" />
+              <!-- Lit phase terminator path -->
+              <path id="moon-lit-path" d="" fill="url(#moon-lit-grad)" clip-path="url(#moon-disk-clip)" />
+              <!-- Subtle lunar maria craters -->
+              <g clip-path="url(#moon-disk-clip)" opacity="0.14" fill="#1E3A5F">
+                <circle cx="38" cy="36" r="10" />
+                <circle cx="59" cy="43" r="12" />
+                <circle cx="48" cy="64" r="8" />
+                <circle cx="67" cy="60" r="6" />
+                <circle cx="33" cy="58" r="5" />
+              </g>
+              <!-- Crisp luminous rim -->
+              <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255, 255, 255, 0.65)" stroke-width="1.2" />
+            </svg>
+            <div class="astro-metrics tabular">
+              <div id="moon-phase-name" class="moon-phase-name ellipsis">月相計算中</div>
+              <div class="astro-pair-row">
+                <span class="astro-label">月齢</span>
+                <span id="moon-age-val" class="astro-val" style="font-size: clamp(9.5px, 1.32vh, 14px);">--.-日</span>
+              </div>
+              <div id="moon-next-full" class="astro-sub ellipsis">次の満月: --</div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ==================== RIGHT COLUMN ==================== -->
+    <section class="right-col">
+      <!-- Row 1: Minimalist Dark Always-Looping Precipitation Radar Map -->
+      <article class="glass-card radar-card">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M23 12a11.05 11.05 0 0 0-22 0zm-5 7a3 3 0 0 1-6 0v-7"></path>
+            </svg>
+            降水マップ
+          </span>
+          <div class="radar-header-actions">
+            <span id="radar-source-pill" class="pill-badge">
+              <span class="live-dot"></span>
+              <span id="radar-source-text">読込中</span>
+            </span>
+            <button id="theme-toggle-btn" type="button" class="pill-badge pill-btn" title="背景テーマ切替">
+              背景: 自動
+            </button>
+          </div>
+        </div>
+
+        <div class="radar-stage">
+          <div id="radar-map"></div>
+
+          <!-- Top-left floating status & frame timestamp pill -->
+          <div class="radar-time-pill tabular">
+            <span id="radar-mode-dot" class="live-dot"></span>
+            <span id="radar-frame-label">実況 --:--</span>
+          </div>
+
+          <!-- Bottom floating 60fps smooth progress bar & legend -->
+          <div class="radar-bottom-bar">
+            <span id="radar-start-time" class="radar-edge-time tabular">--:--</span>
+            <div class="radar-progress-track">
+              <div id="radar-progress-fill" class="radar-progress-fill"></div>
+              <div id="radar-playhead" class="radar-playhead"></div>
+            </div>
+            <span id="radar-end-time" class="radar-edge-time tabular">--:--</span>
+            <div class="radar-legend">
+              <span>弱</span>
+              <span class="radar-legend-bar"></span>
+              <span>強</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Row 2: ISS Live Tracker & P2P Real-time Earthquake Monitor -->
+      <div class="right-bottom-split">
+        <!-- ISS Live Tracker -->
+        <article class="glass-card sub-panel">
+          <div class="card-header">
+            <span class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M13 7 9 3 5 7l4 4"></path>
+                <path d="m17 11 4 4-4 4-4-4"></path>
+                <path d="m8 12 4 4 6-6-4-4Z"></path>
+                <path d="m16 8 3-3"></path>
+                <path d="M9 21a6 6 0 0 0-6-6"></path>
+              </svg>
+              ISS 現在位置
+            </span>
+            <span id="iss-status-pill" class="pill-badge">
+              <span id="iss-status-dot" class="live-dot is-cyan"></span>
+              <span id="iss-status-text">LIVE</span>
+            </span>
+          </div>
+
+          <div class="iss-map-wrap">
+            <svg id="iss-svg" viewBox="0 0 360 180" preserveAspectRatio="xMidYMid slice" class="iss-svg" aria-hidden="true">
+              <defs>
+                <filter id="iss-glow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="2.2" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
+              <!-- Subtle Lat/Lon Graticule -->
+              <g stroke="rgba(180, 215, 255, 0.11)" stroke-width="0.55">
+                <line x1="0" y1="30" x2="360" y2="30" />
+                <line x1="0" y1="60" x2="360" y2="60" />
+                <line x1="0" y1="90" x2="360" y2="90" stroke="rgba(180, 215, 255, 0.22)" stroke-dasharray="2 3" />
+                <line x1="0" y1="120" x2="360" y2="120" />
+                <line x1="0" y1="150" x2="360" y2="150" />
+                <line x1="60" y1="0" x2="60" y2="180" />
+                <line x1="120" y1="0" x2="120" y2="180" />
+                <line x1="180" y1="0" x2="180" y2="180" />
+                <line x1="240" y1="0" x2="240" y2="180" />
+                <line x1="300" y1="0" x2="300" y2="180" />
+              </g>
+
+              <!-- Clean Self-Contained World Continents (Equirectangular x=lon+180, y=90-lat) -->
+              <g fill="#1c3358" stroke="rgba(165, 210, 255, 0.34)" stroke-width="0.65" stroke-linejoin="round">
+                <!-- North America -->
+                <path d="M 14 23 L 34 19 L 58 21 L 78 24 L 96 29 L 116 33 L 125 41 L 118 48 L 106 52 L 101 61 L 96 66 L 86 67 L 82 72 L 91 77 L 99 82 L 94 84 L 84 78 L 76 72 L 66 64 L 58 55 L 54 45 L 43 35 L 28 31 L 16 28 Z" />
+                <!-- Greenland -->
+                <path d="M 122 10 L 146 8 L 160 15 L 152 26 L 138 30 L 126 21 Z" />
+                <!-- South America -->
+                <path d="M 101 82 L 112 79 L 124 85 L 136 91 L 145 97 L 141 112 L 131 124 L 122 135 L 114 146 L 108 144 L 108 128 L 104 114 L 99 101 L 99 90 Z" />
+                <!-- Europe -->
+                <path d="M 171 53 L 176 46 L 182 42 L 186 35 L 194 25 L 207 20 L 218 23 L 222 33 L 216 42 L 210 47 L 202 48 L 197 52 L 190 50 L 184 53 L 175 54 Z" />
+                <!-- UK -->
+                <path d="M 172 34 L 178 33 L 180 39 L 174 40 Z" />
+                <!-- Africa -->
+                <path d="M 164 62 L 175 55 L 190 55 L 203 58 L 214 60 L 222 72 L 231 79 L 226 92 L 218 106 L 211 119 L 201 125 L 195 123 L 191 107 L 186 93 L 178 86 L 166 84 L 162 74 Z" />
+                <!-- Madagascar -->
+                <path d="M 225 103 L 229 102 L 228 115 L 224 114 Z" />
+                <!-- Eurasia / Asia -->
+                <path d="M 214 58 L 222 49 L 218 38 L 222 24 L 245 18 L 278 17 L 315 20 L 348 24 L 352 30 L 336 35 L 325 42 L 316 48 L 308 55 L 301 64 L 291 69 L 283 76 L 278 83 L 274 75 L 267 70 L 258 81 L 250 75 L 243 66 L 234 65 L 227 72 L 219 67 Z" />
+                <!-- Japan Archipelago -->
+                <path d="M 321 44 L 325 46 L 322 50 L 319 48 Z M 319 50 L 322 53 L 318 57 L 313 58 L 311 56 L 316 53 Z M 309 58 L 312 60 L 310 62 L 308 60 Z" fill="#2c4e82" stroke="rgba(190, 230, 255, 0.58)" />
+                <!-- Indonesia / Maritime SE Asia -->
+                <path d="M 276 88 L 284 93 L 294 96 L 290 98 L 280 94 Z M 292 88 L 298 87 L 300 92 L 294 93 Z M 310 92 L 324 94 L 326 98 L 312 96 Z" />
+                <!-- Australia -->
+                <path d="M 294 114 L 307 104 L 322 103 L 333 113 L 333 127 L 322 133 L 308 128 L 295 126 Z" />
+                <!-- New Zealand -->
+                <path d="M 347 132 L 354 127 L 355 134 L 348 139 Z" />
+                <!-- Antarctica -->
+                <path d="M 0 166 L 45 162 L 105 165 L 175 160 L 245 161 L 315 164 L 360 163 L 360 180 L 0 180 Z" opacity="0.55" />
+              </g>
+
+              <!-- ISS Ground Track (split cleanly across antimeridian) -->
+              <path id="iss-orbit-glow" d="" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="3.2" />
+              <path id="iss-orbit-path" d="" fill="none" stroke="rgba(255, 255, 255, 0.85)" stroke-width="1.2" stroke-dasharray="3 2.5" />
+
+              <!-- Yokohama Marker -->
+              <g id="iss-home-marker">
+                <circle cx="319.6" cy="54.6" r="4.8" fill="rgba(253, 224, 71, 0.22)" />
+                <circle cx="319.6" cy="54.6" r="2.1" fill="#FDE047" stroke="#ffffff" stroke-width="0.7" />
+              </g>
+
+              <!-- Pulsing Luminous ISS Icon -->
+              <g id="iss-marker" transform="translate(180, 90)">
+                <circle class="iss-pulse-circle" cx="0" cy="0" r="6" fill="none" stroke="#64D2FF" stroke-width="1.2" />
+                <circle cx="0" cy="0" r="7" fill="rgba(100, 210, 255, 0.24)" />
+                <!-- Solar arrays + Core -->
+                <g filter="url(#iss-glow)" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round">
+                  <line x1="-6.5" y1="0" x2="6.5" y2="0" />
+                  <rect x="-5.8" y="-3.2" width="2.4" height="6.4" rx="0.6" fill="#64D2FF" stroke="#ffffff" stroke-width="0.7" />
+                  <rect x="3.4" y="-3.2" width="2.4" height="6.4" rx="0.6" fill="#64D2FF" stroke="#ffffff" stroke-width="0.7" />
+                  <circle cx="0" cy="0" r="2.1" fill="#FFFFFF" stroke="none" />
+                </g>
+              </g>
+            </svg>
+            <div id="iss-region" class="iss-region-pill ellipsis">太平洋上空</div>
+          </div>
+
+          <div class="iss-telemetry-grid tabular">
+            <div class="iss-stat-box">
+              <span class="iss-stat-label">緯度 / 経度</span>
+              <span id="iss-coords" class="iss-stat-val ellipsis">--.-°N / ---.-°E</span>
+            </div>
+            <div class="iss-stat-box">
+              <span class="iss-stat-label">横浜までの距離</span>
+              <span id="iss-distance" class="iss-stat-val ellipsis">--- km</span>
+            </div>
+            <div class="iss-stat-box">
+              <span class="iss-stat-label">高度</span>
+              <span id="iss-altitude" class="iss-stat-val">418 km</span>
+            </div>
+            <div class="iss-stat-box">
+              <span class="iss-stat-label">速度</span>
+              <span id="iss-velocity" class="iss-stat-val">27,580 km/h</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- P2P Real-time Earthquake Monitor -->
+        <article class="glass-card sub-panel">
+          <div class="card-header">
+            <span class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              地震モニタ
+            </span>
+            <span id="quake-status-pill" class="pill-badge">
+              <span id="quake-status-dot" class="live-dot"></span>
+              <span id="quake-status-text">P2P地震情報</span>
+            </span>
+          </div>
+
+          <div class="quake-content">
+            <!-- Latest Earthquake Highlight -->
+            <div class="quake-hero">
+              <div id="quake-hero-scale-box" class="quake-scale-box" style="background: rgba(56, 132, 220, 0.72);">
+                <span class="quake-scale-cap">最大震度</span>
+                <span id="quake-hero-scale" class="quake-scale-num tabular">-</span>
+              </div>
+              <div class="quake-hero-info">
+                <div id="quake-hero-epicenter" class="quake-epicenter ellipsis">地震情報を取得中...</div>
+                <div class="quake-meta-row tabular">
+                  <span id="quake-hero-magdepth">M-.- ・ 深さ --km</span>
+                  <span id="quake-hero-tsunami" class="quake-tsunami-badge is-safe">津波の心配なし</span>
+                </div>
+                <div id="quake-hero-time" class="quake-row-time tabular">--/-- --:--</div>
+              </div>
+            </div>
+
+            <!-- Next 4 Recent Earthquakes -->
+            <div id="quake-list" class="quake-list tabular"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* =======================================================================
+         1. USER CONFIGURATION
+         ======================================================================= */
+      const CONFIG = {
+        cityName: '横浜',
+        lat: 35.4437,
+        lon: 139.6380,
+        radarZoom: 7,
+        hourlyCount: 9,
+        weatherRefreshMin: 15,
+        radarRefreshMin: 10,
+        quakeRefreshSec: 60,
+        issSyncSec: 10,
+      };
+
+      const THEME_MODES = [
+        { key: 'auto', label: '背景: 自動' },
+        { key: 'clear-day', label: '背景: 快晴' },
+        { key: 'sunrise', label: '背景: 朝焼け' },
+        { key: 'sunset', label: '背景: 夕焼け' },
+        { key: 'clear-night', label: '背景: 夜空' },
+        { key: 'cloudy', label: '背景: 曇り' },
+        { key: 'rain', label: '背景: 雨' },
+        { key: 'snow', label: '背景: 雪' },
+      ];
+
+      /* =======================================================================
+         2. SHARED STATE & SAFE DOM HELPERS
+         ======================================================================= */
+      const STATE = {
+        themeIdx: 0,
+        activeTheme: 'clear-night',
+        isThunderstorm: false,
+        lastCalendarDateKey: '',
+        sunriseDate: null,
+        sunsetDate: null,
+        weatherData: null,
+
+        // Radar state
+        map: null,
+        baseLayer: null,
+        baseFallbackTier: 0,
+        baseTileErrors: 0,
+        radarFrames: [],
+        radarActiveIdx: -1,
+        radarAnimStartMs: 0,
+        radarRafId: null,
+
+        // ISS orbital propagation state
+        iss: {
+          lat: 28.4,
+          lon: 146.2,
+          altitude: 418.4,
+          velocity: 27576,
+          ascending: true,
+          lastUpdateMs: Date.now(),
+          live: false,
+        },
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const setText = (id, text) => {
+        const el = $(id);
+        if (el) el.textContent = text;
+      };
+      const setHtml = (id, html) => {
+        const el = $(id);
+        if (el) el.innerHTML = html;
+      };
+      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+      const pad2 = (n) => String(Math.floor(Math.abs(n))).padStart(2, '0');
+
+      function formatJstHm(date) {
+        if (!date || isNaN(date.getTime())) return '--:--';
+        const jst = new Date(date.getTime() + 9 * 3600000);
+        return `${pad2(jst.getUTCHours())}:${pad2(jst.getUTCMinutes())}`;
+      }
+
+      function formatJstMdHm(date) {
+        if (!date || isNaN(date.getTime())) return '--/-- --:--';
+        const jst = new Date(date.getTime() + 9 * 3600000);
+        return `${jst.getUTCMonth() + 1}/${jst.getUTCDate()} ${pad2(jst.getUTCHours())}:${pad2(jst.getUTCMinutes())}`;
+      }
+
+      async function fetchWithTimeout(url, timeoutMs) {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), timeoutMs || 9000);
+        try {
+          const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+          return res;
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+
+      /* =======================================================================
+         3. SF SYMBOLS-INSPIRED MULTI-COLOR SVG WEATHER ICONS
+         ======================================================================= */
+      const ICONS = {
+        sun: `<svg viewBox="0 0 36 36" fill="none">
+          <defs><radialGradient id="ig-sun" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFF59D"/><stop offset="100%" stop-color="#F59E0B"/></radialGradient></defs>
+          <circle cx="18" cy="18" r="7.5" fill="url(#ig-sun)"/>
+          <g stroke="#FCD34D" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="3.5" x2="18" y2="6.8"/><line x1="18" y1="29.2" x2="18" y2="32.5"/>
+            <line x1="3.5" y1="18" x2="6.8" y2="18"/><line x1="29.2" y1="18" x2="32.5" y2="18"/>
+            <line x1="7.8" y1="7.8" x2="10.1" y2="10.1"/><line x1="25.9" y1="25.9" x2="28.2" y2="28.2"/>
+            <line x1="28.2" y1="7.8" x2="25.9" y2="10.1"/><line x1="10.1" y1="25.9" x2="7.8" y2="28.2"/>
+          </g></svg>`,
+        moon: `<svg viewBox="0 0 36 36" fill="none">
+          <path d="M24.6 22.8A9.8 9.8 0 0 1 13.2 11.4a9.8 9.8 0 1 0 11.4 11.4Z" fill="#E0F2FE" stroke="#BAE6FD" stroke-width="1"/>
+          <circle cx="24" cy="10" r="1.4" fill="#FFF9C4"/><circle cx="27.5" cy="14" r="1" fill="#E0F2FE"/></svg>`,
+        partlyDay: `<svg viewBox="0 0 36 36" fill="none">
+          <circle cx="13.5" cy="13.5" r="5.5" fill="#FBBF24"/>
+          <g stroke="#FCD34D" stroke-width="1.8" stroke-linecap="round">
+            <line x1="13.5" y1="4.5" x2="13.5" y2="6.3"/><line x1="4.5" y1="13.5" x2="6.3" y2="13.5"/>
+            <line x1="7.2" y1="7.2" x2="8.6" y2="8.6"/><line x1="19.8" y1="7.2" x2="18.4" y2="8.6"/>
+          </g>
+          <path d="M12.5 27.5h13.8a5.2 5.2 0 0 0 .8-10.3A6.8 6.8 0 0 0 14 15.8a5.8 5.8 0 0 0-1.5 11.7Z" fill="#FFFFFF" fill-opacity="0.95"/></svg>`,
+        partlyNight: `<svg viewBox="0 0 36 36" fill="none">
+          <path d="M19.5 14.5a6.2 6.2 0 0 1-7.4-7.4 6.2 6.2 0 1 0 7.4 7.4Z" fill="#BAE6FD"/>
+          <path d="M11.8 27.5h14a5.2 5.2 0 0 0 .8-10.3 6.8 6.8 0 0 0-13.1-1.3 5.8 5.8 0 0 0-1.7 11.6Z" fill="#E2E8F0"/></svg>`,
+        cloud: `<svg viewBox="0 0 36 36" fill="none">
+          <path d="M10.8 27h15.2a5.8 5.8 0 0 0 .9-11.5 7.6 7.6 0 0 0-14.7-1.5A6.4 6.4 0 0 0 10.8 27Z" fill="#E2E8F0"/>
+          <path d="M9.8 27h15.5a5 5 0 0 0 .6-9.9 6.6 6.6 0 0 0-12.7-1.2A5.5 5.5 0 0 0 9.8 27Z" fill="#FFFFFF" fill-opacity="0.92"/></svg>`,
+        fog: `<svg viewBox="0 0 36 36" fill="none">
+          <path d="M10.5 21.5h15a4.6 4.6 0 0 0 .7-9.1 6.2 6.2 0 0 0-12-1.2 5.2 5.2 0 0 0-3.7 10.3Z" fill="#CBD5E1"/>
+          <g stroke="#E2E8F0" stroke-width="2" stroke-linecap="round" opacity="0.88">
+            <line x1="7" y1="25.5" x2="29" y2="25.5"/><line x1="10" y1="29.5" x2="26" y2="29.5"/>
+          </g></svg>`,
+        rain: `<svg viewBox="0 0 36 36" fill="none">
+          <path d="M10.5 22h15a4.8 4.8 0 0 0 .7-9.5 6.5 6.5 0 0 0-12.6-1.3A5.4 5.4 0 0 0 10.5 22Z" fill="#E2E8F0"/>
+          <g stroke="#38BDF8" stroke-width="2.1" stroke-linecap="round">
+            <line x1="12.5" y1="25.5" x2="10.8" y2="30.5"/>
+            <line x1="18.5" y1="25.5" x2="16.8" y2="31.5"/>
+            <line x1="24.5" y1="25.5" x2="22.8" y2="30.5"/>
+          </g></svg>`,
+        storm: `<svg viewBox="0 0 36 36" fill="none">
+          <path d="M10.5 21.5h15a4.8 4.8 0 0 0 .7-9.5 6.5 6.5 0 0 0-12.6-1.3 5.4 5.4 0 0 0-3.1 10.8Z" fill="#CBD5E1"/>
+          <path d="M18.8 21.5h-3.6l-1.8 5.2h3l-1.5 5.3 6.2-7.3h-3.3l1-3.2Z" fill="#FACC15"/>
+          <line x1="11" y1="25" x2="9.5" y2="29.5" stroke="#38BDF8" stroke-width="1.9" stroke-linecap="round"/>
+          <line x1="25" y1="25" x2="23.5" y2="29.5" stroke="#38BDF8" stroke-width="1.9" stroke-linecap="round"/></svg>`,
+        snow: `<svg viewBox="0 0 36 36" fill="none">
+          <path d="M10.5 22h15a4.8 4.8 0 0 0 .7-9.5 6.5 6.5 0 0 0-12.6-1.3A5.4 5.4 0 0 0 10.5 22Z" fill="#F1F5F9"/>
+          <g fill="#E0F2FE">
+            <circle cx="12" cy="27" r="1.8"/><circle cx="18" cy="29.5" r="2"/><circle cx="24" cy="27" r="1.8"/>
+          </g></svg>`,
+      };
+
+      function getWeatherMeta(wmoCode, isDay) {
+        const day = isDay !== 0;
+        const c = Number(wmoCode);
+        if (c === 0) return { label: day ? '快晴' : '快晴', svg: day ? ICONS.sun : ICONS.moon, group: 'clear' };
+        if (c === 1) return { label: '晴れ', svg: day ? ICONS.sun : ICONS.moon, group: 'clear' };
+        if (c === 2) return { label: '晴れ時々曇り', svg: day ? ICONS.partlyDay : ICONS.partlyNight, group: 'partly' };
+        if (c === 3) return { label: '曇り', svg: ICONS.cloud, group: 'cloudy' };
+        if (c === 45 || c === 48) return { label: '霧', svg: ICONS.fog, group: 'cloudy' };
+        if ((c >= 51 && c <= 67) || (c >= 80 && c <= 82)) return { label: c >= 63 || c >= 81 ? '強い雨' : '雨', svg: ICONS.rain, group: 'rain' };
+        if ((c >= 71 && c <= 77) || c === 85 || c === 86) return { label: '雪', svg: ICONS.snow, group: 'snow' };
+        if (c >= 95) return { label: '雷雨', svg: ICONS.storm, group: 'storm' };
+        return { label: '曇り', svg: ICONS.cloud, group: 'cloudy' };
+      }
+
+      /* =======================================================================
+         4. ANIMATED SKY CANVAS ENGINE (STARS, CLOUDS, RAIN, SNOW, LIGHTNING)
+         ======================================================================= */
+      const SkyEngine = (function () {
+        let canvas, ctx, w = 1280, h = 720;
+        let stars = [];
+        let shootingStars = [];
+        let clouds = [];
+        let drops = [];
+        let flakes = [];
+        let motes = [];
+        let nextShootMs = 0;
+        let nextFlashMs = 0;
+
+        function resize() {
+          if (!canvas) return;
+          const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+          w = window.innerWidth || 1280;
+          h = window.innerHeight || 720;
+          canvas.width = Math.floor(w * dpr);
+          canvas.height = Math.floor(h * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          seedParticles();
+        }
+
+        function seedParticles() {
+          stars = Array.from({ length: 110 }, () => ({
+            x: Math.random() * w,
+            y: Math.random() * h * 0.85,
+            r: 0.6 + Math.random() * 1.5,
+            phase: Math.random() * Math.PI * 2,
+            speed: 0.0008 + Math.random() * 0.0022,
+          }));
+
+          clouds = Array.from({ length: 8 }, (_, i) => ({
+            x: (i / 8) * (w + 400) - 200,
+            y: h * (0.06 + Math.random() * 0.55),
+            rx: 130 + Math.random() * 190,
+            ry: 42 + Math.random() * 58,
+            vx: 0.12 + Math.random() * 0.22,
+            alpha: 0.06 + Math.random() * 0.09,
+          }));
+
+          drops = Array.from({ length: 115 }, () => ({
+            x: Math.random() * (w + 120),
+            y: Math.random() * h,
+            len: 14 + Math.random() * 20,
+            vy: 9 + Math.random() * 7,
+            vx: -1.8 - Math.random() * 1.4,
+            alpha: 0.14 + Math.random() * 0.24,
+          }));
+
+          flakes = Array.from({ length: 90 }, () => ({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            r: 1.2 + Math.random() * 2.8,
+            vy: 0.5 + Math.random() * 1.2,
+            drift: Math.random() * Math.PI * 2,
+            alpha: 0.35 + Math.random() * 0.45,
+          }));
+
+          motes = Array.from({ length: 28 }, () => ({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            r: 1.5 + Math.random() * 3.5,
+            vx: 0.08 + Math.random() * 0.16,
+            vy: -0.06 - Math.random() * 0.12,
+            alpha: 0.06 + Math.random() * 0.12,
+          }));
+        }
+
+        function triggerLightning() {
+          const el = $('lightning-flash');
+          if (!el) return;
+          el.style.opacity = '0.75';
+          setTimeout(() => { el.style.opacity = '0'; }, 90);
+          setTimeout(() => {
+            el.style.opacity = '0.45';
+            setTimeout(() => { el.style.opacity = '0'; }, 120);
+          }, 170);
+        }
+
+        function frame(now) {
+          if (!ctx) return;
+          ctx.clearRect(0, 0, w, h);
+          const theme = STATE.activeTheme;
+
+          if (theme === 'clear-night') {
+            // Twinkling stars
+            for (let i = 0; i < stars.length; i++) {
+              const s = stars[i];
+              const a = 0.25 + 0.65 * (0.5 + 0.5 * Math.sin(now * s.speed + s.phase));
+              ctx.fillStyle = `rgba(235, 245, 255, ${a.toFixed(3)})`;
+              ctx.beginPath();
+              ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+              ctx.fill();
+            }
+
+            // Occasional luminous shooting star
+            if (now > nextShootMs) {
+              nextShootMs = now + 5500 + Math.random() * 7500;
+              shootingStars.push({
+                x: w * (0.15 + Math.random() * 0.7),
+                y: h * (0.04 + Math.random() * 0.28),
+                vx: 9 + Math.random() * 5,
+                vy: 4 + Math.random() * 3,
+                life: 0,
+                maxLife: 34,
+              });
+            }
+            for (let i = shootingStars.length - 1; i >= 0; i--) {
+              const sh = shootingStars[i];
+              sh.x += sh.vx;
+              sh.y += sh.vy;
+              sh.life += 1;
+              const p = 1 - sh.life / sh.maxLife;
+              if (p <= 0) {
+                shootingStars.splice(i, 1);
+                continue;
+              }
+              const grad = ctx.createLinearGradient(sh.x, sh.y, sh.x - sh.vx * 7, sh.y - sh.vy * 7);
+              grad.addColorStop(0, `rgba(255, 255, 255, ${(0.95 * p).toFixed(2)})`);
+              grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+              ctx.strokeStyle = grad;
+              ctx.lineWidth = 1.8;
+              ctx.beginPath();
+              ctx.moveTo(sh.x, sh.y);
+              ctx.lineTo(sh.x - sh.vx * 7, sh.y - sh.vy * 7);
+              ctx.stroke();
+            }
+          } else if (theme === 'clear-day' || theme === 'sunrise' || theme === 'sunset') {
+            // Soft warm/azure solar bloom + drifting high-altitude clouds
+            const bloomX = theme === 'clear-day' ? w * 0.22 : w * 0.5;
+            const bloomY = theme === 'clear-day' ? h * 0.12 : h * 0.88;
+            const bloomColor = theme === 'clear-day'
+              ? 'rgba(255, 255, 255, 0.16)'
+              : theme === 'sunrise'
+                ? 'rgba(255, 214, 153, 0.24)'
+                : 'rgba(255, 160, 122, 0.22)';
+            const rg = ctx.createRadialGradient(bloomX, bloomY, 10, bloomX, bloomY, w * 0.45);
+            rg.addColorStop(0, bloomColor);
+            rg.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = rg;
+            ctx.fillRect(0, 0, w, h);
+
+            for (let i = 0; i < motes.length; i++) {
+              const m = motes[i];
+              m.x += m.vx;
+              m.y += m.vy;
+              if (m.x > w + 10) m.x = -10;
+              if (m.y < -10) m.y = h + 10;
+              ctx.fillStyle = `rgba(255, 255, 255, ${m.alpha})`;
+              ctx.beginPath();
+              ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          if (theme === 'cloudy' || theme === 'sunrise' || theme === 'sunset' || theme === 'clear-day') {
+            const cMult = theme === 'cloudy' ? 1.85 : 0.65;
+            for (let i = 0; i < clouds.length; i++) {
+              const c = clouds[i];
+              c.x += c.vx;
+              if (c.x - c.rx > w + 80) c.x = -c.rx - 60;
+              const grad = ctx.createRadialGradient(c.x, c.y, c.ry * 0.15, c.x, c.y, c.rx);
+              grad.addColorStop(0, `rgba(255, 255, 255, ${(c.alpha * cMult).toFixed(3)})`);
+              grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+              ctx.fillStyle = grad;
+              ctx.beginPath();
+              ctx.ellipse(c.x, c.y, c.rx, c.ry, 0, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          if (theme === 'rain') {
+            ctx.lineWidth = 1.2;
+            ctx.lineCap = 'round';
+            for (let i = 0; i < drops.length; i++) {
+              const d = drops[i];
+              d.x += d.vx;
+              d.y += d.vy;
+              if (d.y > h + 20 || d.x < -30) {
+                d.x = Math.random() * (w + 140);
+                d.y = -20 - Math.random() * 80;
+              }
+              ctx.strokeStyle = `rgba(205, 232, 255, ${d.alpha})`;
+              ctx.beginPath();
+              ctx.moveTo(d.x, d.y);
+              ctx.lineTo(d.x + d.vx * 1.4, d.y + d.len);
+              ctx.stroke();
+            }
+
+            if (now > nextFlashMs) {
+              nextFlashMs = now + (STATE.isThunderstorm ? 6500 : 14000) + Math.random() * 9000;
+              triggerLightning();
+            }
+          }
+
+          if (theme === 'snow') {
+            for (let i = 0; i < flakes.length; i++) {
+              const f = flakes[i];
+              f.y += f.vy;
+              f.x += Math.sin(now * 0.001 + f.drift) * 0.45;
+              if (f.y > h + 10) {
+                f.y = -10;
+                f.x = Math.random() * w;
+              }
+              ctx.fillStyle = `rgba(255, 255, 255, ${f.alpha})`;
+              ctx.beginPath();
+              ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          requestAnimationFrame(frame);
+        }
+
+        function init() {
+          canvas = $('sky-canvas');
+          if (!canvas) return;
+          ctx = canvas.getContext('2d');
+          resize();
+          window.addEventListener('resize', resize);
+          nextShootMs = performance.now() + 2500;
+          nextFlashMs = performance.now() + 6000;
+          requestAnimationFrame(frame);
+        }
+
+        return { init };
+      })();
+
+      function resolveAutoTheme() {
+        const now = new Date();
+        const wmo = STATE.weatherData && STATE.weatherData.current
+          ? Number(STATE.weatherData.current.weather_code)
+          : 0;
+        STATE.isThunderstorm = wmo >= 95;
+
+        const meta = getWeatherMeta(wmo, 1);
+        if (meta.group === 'rain' || meta.group === 'storm') return 'rain';
+        if (meta.group === 'snow') return 'snow';
+        if (meta.group === 'cloudy') return 'cloudy';
+
+        // Compare current time against sunrise & sunset
+        const rise = STATE.sunriseDate;
+        const set = STATE.sunsetDate;
+        if (rise && set) {
+          const nowMs = now.getTime();
+          const riseMs = rise.getTime();
+          const setMs = set.getTime();
+          if (Math.abs(nowMs - riseMs) <= 45 * 60000) return 'sunrise';
+          if (Math.abs(nowMs - setMs) <= 45 * 60000) return 'sunset';
+          if (nowMs > riseMs && nowMs < setMs) return 'clear-day';
+          return 'clear-night';
+        }
+
+        const jstHour = new Date(now.getTime() + 9 * 3600000).getUTCHours();
+        if (jstHour >= 5 && jstHour <= 6) return 'sunrise';
+        if (jstHour >= 17 && jstHour <= 18) return 'sunset';
+        if (jstHour >= 7 && jstHour < 17) return 'clear-day';
+        return 'clear-night';
+      }
+
+      function applyTheme() {
+        const mode = THEME_MODES[STATE.themeIdx] || THEME_MODES[0];
+        const resolved = mode.key === 'auto' ? resolveAutoTheme() : mode.key;
+        STATE.activeTheme = resolved;
+        document.body.setAttribute('data-theme', resolved);
+        setText('theme-toggle-btn', mode.label);
+      }
+
+      /* =======================================================================
+         5. CLOCK & ACCURATE JAPANESE CALENDAR (HOLIDAYS + MIDNIGHT AUTO-UPDATE)
+         ======================================================================= */
+      function getJapaneseHolidays(year) {
+        const map = new Map();
+        const add = (m, d, name) => map.set(`${year}-${pad2(m)}-${pad2(d)}`, name);
+        const nthMonday = (m, n) => {
+          const firstDow = new Date(year, m - 1, 1).getDay();
+          const offset = (1 - firstDow + 7) % 7;
+          return 1 + offset + (n - 1) * 7;
+        };
+
+        // Fixed & Happy Monday National Holidays
+        add(1, 1, '元日');
+        add(1, nthMonday(1, 2), '成人の日');
+        add(2, 11, '建国記念の日');
+        add(2, 23, '天皇誕生日');
+        const vernal = Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+        add(3, vernal, '春分の日');
+        add(4, 29, '昭和の日');
+        add(5, 3, '憲法記念日');
+        add(5, 4, 'みどりの日');
+        add(5, 5, 'こどもの日');
+        add(7, nthMonday(7, 3), '海の日');
+        add(8, 11, '山の日');
+        const keiro = nthMonday(9, 3);
+        const autumn = Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+        add(9, keiro, '敬老の日');
+        add(9, autumn, '秋分の日');
+        add(10, nthMonday(10, 2), 'スポーツの日');
+        add(11, 3, '文化の日');
+        add(11, 23, '勤労感謝の日');
+
+        // Citizens' Holiday (sandwiched weekday between two holidays)
+        if (autumn - keiro === 2) {
+          add(9, keiro + 1, '国民の休日');
+        }
+
+        // Substitute Holidays (振替休日)
+        const baseKeys = Array.from(map.keys());
+        for (let i = 0; i < baseKeys.length; i++) {
+          const parts = baseKeys[i].split('-').map(Number);
+          const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+          if (dt.getDay() === 0) {
+            const sub = new Date(dt.getTime());
+            do {
+              sub.setDate(sub.getDate() + 1);
+            } while (map.has(`${sub.getFullYear()}-${pad2(sub.getMonth() + 1)}-${pad2(sub.getDate())}`));
+            add(sub.getMonth() + 1, sub.getDate(), '振替休日');
+          }
+        }
+        return map;
+      }
+
+      function renderCalendar(now) {
+        try {
+          const jst = new Date(now.getTime() + 9 * 3600000);
+          const year = jst.getUTCFullYear();
+          const month = jst.getUTCMonth(); // 0..11
+          const todayDay = jst.getUTCDate();
+          const dateKey = `${year}-${month}-${todayDay}`;
+          if (STATE.lastCalendarDateKey === dateKey) return;
+          STATE.lastCalendarDateKey = dateKey;
+
+          setText('cal-month-label', `${year}年 ${month + 1}月`);
+
+          const holidays = getJapaneseHolidays(year);
+          const firstDayDow = new Date(Date.UTC(year, month, 1)).getUTCDay();
+          const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+          const prevMonthDays = new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+          const cells = [];
+          for (let i = 0; i < 42; i++) {
+            const dayNum = i - firstDayDow + 1;
+            let cls = 'cal-day';
+            let label = '';
+
+            if (dayNum < 1) {
+              cls += ' is-out';
+              label = String(prevMonthDays + dayNum);
+            } else if (dayNum > daysInMonth) {
+              cls += ' is-out';
+              label = String(dayNum - daysInMonth);
+            } else {
+              label = String(dayNum);
+              const col = i % 7;
+              const k = `${year}-${pad2(month + 1)}-${pad2(dayNum)}`;
+              if (dayNum === todayDay) {
+                cls += ' is-today';
+              } else if (holidays.has(k)) {
+                cls += ' is-holiday';
+              } else if (col === 0) {
+                cls += ' is-sun';
+              } else if (col === 6) {
+                cls += ' is-sat';
+              }
+            }
+            cells.push(`<div class="${cls}">${label}</div>`);
+          }
+          setHtml('cal-grid', cells.join(''));
+        } catch (err) {
+          console.warn('Calendar render error:', err);
+        }
+      }
+
+      function tickClock() {
+        try {
+          const now = new Date();
+          const jst = new Date(now.getTime() + 9 * 3600000);
+          const wd = ['日', '月', '火', '水', '木', '金', '土'][jst.getUTCDay()];
+          setText('hero-clock', `${pad2(jst.getUTCHours())}:${pad2(jst.getUTCMinutes())}`);
+          setText('hero-seconds', pad2(jst.getUTCSeconds()));
+          setText('hero-date', `${jst.getUTCFullYear()}年${jst.getUTCMonth() + 1}月${jst.getUTCDate()}日 (${wd})`);
+
+          renderCalendar(now);
+          if (jst.getUTCSeconds() === 0) {
+            renderSunWidget(now);
+            renderMoonWidget(now);
+            if (THEME_MODES[STATE.themeIdx].key === 'auto') applyTheme();
+          }
+        } catch (err) {
+          console.warn('Clock tick error:', err);
+        }
+      }
+
+      /* =======================================================================
+         6. ASTRONOMICAL WIDGETS: SUNRISE/SUNSET (NOAA FALLBACK) & MOON PHASE
+         ======================================================================= */
+      function computeNoaaSunTimes(date, lat, lon) {
+        // Compact NOAA solar algorithm for reliable offline sunrise/sunset in UTC
+        const rad = Math.PI / 180;
+        const jst = new Date(date.getTime() + 9 * 3600000);
+        const startOfYear = Date.UTC(jst.getUTCFullYear(), 0, 1);
+        const dayOfYear = Math.floor((Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate()) - startOfYear) / 86400000) + 1;
+
+        const gamma = (2 * Math.PI / 365) * (dayOfYear - 1);
+        const eqTime = 229.18 * (
+          0.000075 +
+          0.001868 * Math.cos(gamma) -
+          0.032077 * Math.sin(gamma) -
+          0.014615 * Math.cos(2 * gamma) -
+          0.040849 * Math.sin(2 * gamma)
+        );
+        const decl =
+          0.006918 -
+          0.399912 * Math.cos(gamma) +
+          0.070257 * Math.sin(gamma) -
+          0.006758 * Math.cos(2 * gamma) +
+          0.000907 * Math.sin(2 * gamma) -
+          0.002697 * Math.cos(3 * gamma) +
+          0.00148 * Math.sin(3 * gamma);
+
+        const latRad = lat * rad;
+        const cosHa = (Math.cos(90.833 * rad) / (Math.cos(latRad) * Math.cos(decl))) - Math.tan(latRad) * Math.tan(decl);
+        const haDeg = Math.acos(clamp(cosHa, -1, 1)) / rad;
+
+        const riseMinUtc = 720 - 4 * (lon + haDeg) - eqTime;
+        const setMinUtc = 720 - 4 * (lon - haDeg) - eqTime;
+
+        const baseUtc = Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate());
+        // Subtract 9h offset if UTC day rolled over relative to JST day
+        const midnightJstUtc = baseUtc - 9 * 3600000;
+        let riseMs = baseUtc + riseMinUtc * 60000;
+        let setMs = baseUtc + setMinUtc * 60000;
+        if (riseMs < midnightJstUtc) riseMs += 86400000;
+        if (setMs < midnightJstUtc) setMs += 86400000;
+        return { sunrise: new Date(riseMs), sunset: new Date(setMs) };
+      }
+
+      function renderSunWidget(now) {
+        try {
+          const refNow = now || new Date();
+          if (!STATE.sunriseDate || !STATE.sunsetDate) {
+            const calc = computeNoaaSunTimes(refNow, CONFIG.lat, CONFIG.lon);
+            STATE.sunriseDate = calc.sunrise;
+            STATE.sunsetDate = calc.sunset;
+          }
+
+          const rise = STATE.sunriseDate;
+          const set = STATE.sunsetDate;
+
+          setText('sunrise-time', formatJstHm(rise));
+          setText('sunset-time', formatJstHm(set));
+
+          // Daylight duration
+          const dayMs = Math.max(0, set.getTime() - rise.getTime());
+          const dayHrs = Math.floor(dayMs / 3600000);
+          const dayMins = Math.round((dayMs % 3600000) / 60000);
+          setText('daylight-duration', `日照 ${dayHrs}時間${dayMins}分`);
+
+          // Countdown to next solar event
+          const nowMs = refNow.getTime();
+          let countdownText = '';
+          if (nowMs < rise.getTime()) {
+            const diffMin = Math.max(1, Math.round((rise.getTime() - nowMs) / 60000));
+            countdownText = `日の出まで ${Math.floor(diffMin / 60)}時間${diffMin % 60}分`;
+          } else if (nowMs < set.getTime()) {
+            const diffMin = Math.max(1, Math.round((set.getTime() - nowMs) / 60000));
+            countdownText = `日の入まで ${Math.floor(diffMin / 60)}時間${diffMin % 60}分`;
+          } else {
+            const nextRise = new Date(rise.getTime() + 86400000);
+            const diffMin = Math.max(1, Math.round((nextRise.getTime() - nowMs) / 60000));
+            countdownText = `次の日の出まで ${Math.floor(diffMin / 60)}時間${diffMin % 60}分`;
+          }
+          setText('sun-countdown', countdownText);
+
+          // Draw Solar Arc SVG (x in [10..150] spans 00:00..24:00 JST, horizon at y=48)
+          const jstMin = (d) => {
+            const j = new Date(d.getTime() + 9 * 3600000);
+            return j.getUTCHours() * 60 + j.getUTCMinutes();
+          };
+          const riseM = jstMin(rise);
+          const setM = jstMin(set);
+          const nowM = jstMin(refNow);
+          const solarNoonM = (riseM + setM) / 2;
+          const halfDay = Math.max(120, (setM - riseM) / 2);
+
+          const xForMin = (m) => 10 + (m / 1440) * 140;
+          const yForMin = (m) => {
+            // Cosine wave passing cleanly through y=48 at sunrise and sunset
+            const angle = ((m - solarNoonM) / halfDay) * (Math.PI / 2);
+            const val = Math.cos(clamp(angle, -Math.PI, Math.PI));
+            return val >= 0 ? 48 - val * 34 : 48 - val * 18;
+          };
+
+          let nightD = '';
+          let dayD = '';
+          const step = 12;
+          for (let m = 0; m <= 1440; m += step) {
+            const x = xForMin(m).toFixed(1);
+            const y = yForMin(m).toFixed(1);
+            if (m < riseM || m > setM) {
+              if (!nightD || (m > setM && m - step <= setM)) {
+                nightD += `M ${x} ${y} `;
+              } else {
+                nightD += `L ${x} ${y} `;
+              }
+            }
+          }
+
+          for (let i = 0; i <= 32; i++) {
+            const m = riseM + (i / 32) * (setM - riseM);
+            const x = xForMin(m).toFixed(1);
+            const y = yForMin(m).toFixed(1);
+            dayD += (i === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`);
+          }
+
+          const nightPath = $('sun-night-path');
+          const dayPath = $('sun-day-path');
+          const dayGlow = $('sun-day-glow');
+          if (nightPath) nightPath.setAttribute('d', nightD.trim());
+          if (dayPath) dayPath.setAttribute('d', dayD);
+          if (dayGlow) dayGlow.setAttribute('d', dayD);
+
+          const rx = xForMin(riseM).toFixed(1);
+          const sx = xForMin(setM).toFixed(1);
+          const rDot = $('sun-rise-dot');
+          const sDot = $('sun-set-dot');
+          if (rDot) rDot.setAttribute('cx', rx);
+          if (sDot) sDot.setAttribute('cx', sx);
+
+          const nx = xForMin(nowM).toFixed(1);
+          const ny = yForMin(nowM).toFixed(1);
+          const isDayNow = nowM >= riseM && nowM <= setM;
+          const nDot = $('sun-now-dot');
+          const nHalo = $('sun-now-halo');
+          if (nDot) {
+            nDot.setAttribute('cx', nx);
+            nDot.setAttribute('cy', ny);
+            nDot.setAttribute('fill', isDayNow ? '#FFF7CC' : '#93C5FD');
+          }
+          if (nHalo) {
+            nHalo.setAttribute('cx', nx);
+            nHalo.setAttribute('cy', ny);
+            nHalo.setAttribute('fill', isDayNow ? 'rgba(255, 240, 175, 0.35)' : 'rgba(147, 197, 253, 0.22)');
+          }
+        } catch (err) {
+          console.warn('Sun widget error:', err);
+        }
+      }
+
+      function renderMoonWidget(now) {
+        try {
+          const refNow = now || new Date();
+          const synodic = 29.530588853;
+          const epochMs = Date.UTC(2000, 0, 6, 18, 14, 0); // Verified New Moon epoch
+          const elapsedDays = (refNow.getTime() - epochMs) / 86400000;
+          const age = ((elapsedDays % synodic) + synodic) % synodic;
+          const phase = age / synodic; // 0=New, 0.25=FirstQ, 0.5=Full, 0.75=LastQ
+          const illumPct = Math.round(((1 - Math.cos(2 * Math.PI * phase)) / 2) * 100);
+
+          // Japanese traditional moon phase naming
+          let phaseName = '新月';
+          if (age < 1.0 || age >= 28.5) phaseName = '新月';
+          else if (age < 2.5) phaseName = '繊月';
+          else if (age < 4.5) phaseName = '三日月';
+          else if (age < 6.4) phaseName = '上弦前';
+          else if (age < 8.4) phaseName = '上弦の月';
+          else if (age < 11.5) phaseName = '十日夜';
+          else if (age < 13.8) phaseName = '十三夜';
+          else if (age < 15.8) phaseName = '満月';
+          else if (age < 17.5) phaseName = '十六夜';
+          else if (age < 20.8) phaseName = '居待月';
+          else if (age < 23.2) phaseName = '下弦の月';
+          else if (age < 26.8) phaseName = '有明月';
+          else phaseName = '晦日月';
+
+          // Days & JST Date until next Full Moon (age ~ 14.765)
+          const halfSynodic = synodic / 2;
+          let daysToFull = halfSynodic - age;
+          if (daysToFull < -0.5) daysToFull += synodic;
+          const nextFullDate = new Date(refNow.getTime() + Math.max(0, daysToFull) * 86400000);
+          const nextFullJst = new Date(nextFullDate.getTime() + 9 * 3600000);
+          const nextFullStr = daysToFull <= 0.6
+            ? '今夜が満月'
+            : `満月まで あと${Math.ceil(daysToFull)}日 (${nextFullJst.getUTCMonth() + 1}/${nextFullJst.getUTCDate()})`;
+
+          setText('moon-phase-name', phaseName);
+          setText('moon-age-val', `${age.toFixed(1)}日`);
+          setText('moon-illum-badge', `輝面 ${illumPct}%`);
+          setText('moon-next-full', nextFullStr);
+
+          // Accurate SVG Terminator Path (Northern Hemisphere: right lit when waxing)
+          const cx = 50, cy = 50, r = 40;
+          const litEl = $('moon-lit-path');
+          if (litEl) {
+            if (phase < 0.012 || phase > 0.988) {
+              litEl.setAttribute('d', '');
+            } else if (Math.abs(phase - 0.5) < 0.012) {
+              litEl.setAttribute('d', `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx} ${cy + r} A ${r} ${r} 0 1 1 ${cx} ${cy - r} Z`);
+            } else {
+              const rx = Math.max(0.01, Math.abs(Math.cos(2 * Math.PI * phase)) * r);
+              const waxing = phase < 0.5;
+              const outerSweep = waxing ? 1 : 0;
+              // Crescent vs Gibbous return arc sweep
+              const innerSweep = waxing ? (phase < 0.25 ? 0 : 1) : (phase < 0.75 ? 0 : 1);
+              const d = `M ${cx} ${cy - r} A ${r} ${r} 0 0 ${outerSweep} ${cx} ${cy + r} A ${rx.toFixed(2)} ${r} 0 0 ${innerSweep} ${cx} ${cy - r} Z`;
+              litEl.setAttribute('d', d);
+            }
+          }
+        } catch (err) {
+          console.warn('Moon widget error:', err);
+        }
+      }
+
+      /* =======================================================================
+         7. WEATHER MODULE (OPEN-METEO + SMOOTH SPARKLINE + 7-DAY TEMP BARS)
+         ======================================================================= */
+      function buildFallbackWeather() {
+        const now = new Date();
+        const hourlyTimes = [];
+        const hourlyTemps = [];
+        const hourlyPops = [];
+        const hourlyCodes = [];
+        const hourlyIsDay = [];
+        const base = new Date(now.getTime());
+        base.setMinutes(0, 0, 0);
+
+        for (let i = 0; i < 24; i++) {
+          const t = new Date(base.getTime() + i * 3600000);
+          const h = new Date(t.getTime() + 9 * 3600000).getUTCHours();
+          hourlyTimes.push(t.toISOString());
+          hourlyTemps.push(11 + Math.round(5 * Math.sin(((h - 8) / 24) * Math.PI * 2)));
+          hourlyPops.push(i === 5 || i === 6 ? 20 : 5);
+          hourlyCodes.push(i >= 4 && i <= 7 ? 2 : 1);
+          hourlyIsDay.push(h >= 6 && h < 17 ? 1 : 0);
+        }
+
+        const dailyTimes = [];
+        const dailyMax = [18, 16, 15, 14, 15, 17, 13];
+        const dailyMin = [10, 8, 7, 6, 5, 9, 6];
+        const dailyCodes = [1, 1, 2, 3, 2, 61, 2];
+        const dailyPop = [10, 10, 20, 30, 15, 70, 25];
+        for (let d = 0; d < 7; d++) {
+          const dt = new Date(now.getTime() + d * 86400000 + 9 * 3600000);
+          dailyTimes.push(`${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`);
+        }
+
+        const sunCalc = computeNoaaSunTimes(now, CONFIG.lat, CONFIG.lon);
+        return {
+          current: {
+            temperature_2m: 12,
+            apparent_temperature: 11,
+            relative_humidity_2m: 54,
+            wind_speed_10m: 2.6,
+            weather_code: 1,
+            is_day: 0,
+          },
+          hourly: {
+            time: hourlyTimes,
+            temperature_2m: hourlyTemps,
+            precipitation_probability: hourlyPops,
+            weather_code: hourlyCodes,
+            is_day: hourlyIsDay,
+          },
+          daily: {
+            time: dailyTimes,
+            weather_code: dailyCodes,
+            temperature_2m_max: dailyMax,
+            temperature_2m_min: dailyMin,
+            precipitation_probability_max: dailyPop,
+            sunrise: [sunCalc.sunrise.toISOString()],
+            sunset: [sunCalc.sunset.toISOString()],
+          },
+        };
+      }
+
+      function buildJapaneseSummary(hourly, startIdx) {
+        const sliceLen = Math.min(CONFIG.hourlyCount, hourly.time.length - startIdx);
+        let firstRainIdx = -1;
+        let maxPop = 0;
+        let minT = Infinity;
+        let maxT = -Infinity;
+        let clearCount = 0;
+
+        for (let i = 0; i < sliceLen; i++) {
+          const idx = startIdx + i;
+          const pop = Number(hourly.precipitation_probability[idx] || 0);
+          const code = Number(hourly.weather_code[idx] || 0);
+          const t = Number(hourly.temperature_2m[idx]);
+          if (pop > maxPop) maxPop = pop;
+          if (t < minT) minT = t;
+          if (t > maxT) maxT = t;
+          if (firstRainIdx === -1 && (pop >= 45 || (code >= 51 && code <= 99))) {
+            firstRainIdx = idx;
+          }
+          if (code <= 2) clearCount += 1;
+        }
+
+        let skyPhrase = '雲が広がりやすい空模様が続く見込みです。';
+        if (firstRainIdx !== -1) {
+          const dt = new Date(hourly.time[firstRainIdx]);
+          const jstH = new Date(dt.getTime() + 9 * 3600000).getUTCHours();
+          skyPhrase = firstRainIdx === startIdx
+            ? `雨が降りやすく、降水確率は最大${Math.round(maxPop)}%の見込みです。`
+            : `${jstH}時頃から雨の可能性があり、降水確率は最大${Math.round(maxPop)}%です。`;
+        } else if (clearCount >= Math.ceil(sliceLen * 0.65)) {
+          skyPhrase = 'おおむね晴れが続く見込みです。';
+        }
+
+        const diff = maxT - minT;
+        const tempPhrase = diff >= 6
+          ? `気温は${Math.round(minT)}°〜${Math.round(maxT)}°と寒暖差が大きくなります。`
+          : '気温は穏やかに推移する見込みです。';
+        return `${skyPhrase}${tempPhrase}`;
+      }
+
+      function buildMonotoneCubicPath(pts) {
+        const n = pts.length;
+        if (n === 0) return '';
+        if (n === 1) return `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+
+        // Fritsch-Carlson monotone cubic interpolation (zero vertical overshoot)
+        const dx = [];
+        const m = [];
+        for (let i = 0; i < n - 1; i++) {
+          dx[i] = pts[i + 1].x - pts[i].x;
+          m[i] = (pts[i + 1].y - pts[i].y) / dx[i];
+        }
+
+        const tangents = new Array(n);
+        tangents[0] = m[0];
+        tangents[n - 1] = m[n - 2];
+        for (let i = 1; i < n - 1; i++) {
+          tangents[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+        }
+
+        for (let i = 0; i < n - 1; i++) {
+          if (Math.abs(m[i]) < 1e-6) {
+            tangents[i] = 0;
+            tangents[i + 1] = 0;
+          } else {
+            const a = tangents[i] / m[i];
+            const b = tangents[i + 1] / m[i];
+            const mag = Math.hypot(a, b);
+            if (mag > 3) {
+              const s = 3 / mag;
+              tangents[i] = s * a * m[i];
+              tangents[i + 1] = s * b * m[i];
+            }
+          }
+        }
+
+        let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+        for (let i = 0; i < n - 1; i++) {
+          const step = dx[i] / 3;
+          const c1x = pts[i].x + step;
+          const c1y = pts[i].y + tangents[i] * step;
+          const c2x = pts[i + 1].x - step;
+          const c2y = pts[i + 1].y - tangents[i + 1] * step;
+          d += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${pts[i + 1].x.toFixed(1)} ${pts[i + 1].y.toFixed(1)}`;
+        }
+        return d;
+      }
+
+      function renderHourlySparkline(temps) {
+        const count = temps.length;
+        if (!count) return;
+        const minT = Math.min.apply(null, temps);
+        const maxT = Math.max.apply(null, temps);
+        const span = maxT - minT;
+        const topPad = 18;
+        const botPad = 18;
+        const usableH = 100 - topPad - botPad;
+
+        const pts = temps.map((t, i) => {
+          const x = ((i + 0.5) / count) * 900;
+          const norm = span < 0.2 ? 0.5 : (t - minT) / span;
+          const y = topPad + (1 - norm) * usableH;
+          return { x, y };
+        });
+
+        const linePath = buildMonotoneCubicPath(pts);
+        const areaPath = `${linePath} L ${pts[count - 1].x.toFixed(1)} 100 L ${pts[0].x.toFixed(1)} 100 Z`;
+
+        const lineEl = $('hourly-spark-line');
+        const glowEl = $('hourly-spark-glow');
+        const areaEl = $('hourly-spark-area');
+        if (lineEl) lineEl.setAttribute('d', linePath);
+        if (glowEl) glowEl.setAttribute('d', linePath);
+        if (areaEl) areaEl.setAttribute('d', areaPath);
+
+        const guides = pts
+          .map((p) => `<line x1="${p.x.toFixed(1)}" y1="${p.y.toFixed(1)}" x2="${p.x.toFixed(1)}" y2="100" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"/>`)
+          .join('');
+        setHtml('hourly-spark-guides', guides);
+
+        // HTML circle dots keep perfect 1:1 roundness regardless of SVG aspect scaling
+        const dots = pts
+          .map((p, i) => {
+            const leftPct = (p.x / 900) * 100;
+            return `<span class="spark-dot ${i === 0 ? 'is-now' : ''}" style="left:${leftPct.toFixed(3)}%;top:${p.y.toFixed(2)}%;"></span>`;
+          })
+          .join('');
+        setHtml('hourly-spark-dots', dots);
+      }
+
+      function tempToAppleColor(tempC) {
+        // Apple Weather calibrated color ramp: blue -> cyan -> yellow-green -> amber -> red
+        const stops = [
+          { t: -2, c: [59, 130, 246] },
+          { t: 6, c: [56, 189, 248] },
+          { t: 14, c: [74, 222, 128] },
+          { t: 21, c: [250, 204, 21] },
+          { t: 28, c: [249, 115, 22] },
+          { t: 35, c: [239, 68, 68] },
+        ];
+        if (tempC <= stops[0].t) return `rgb(${stops[0].c.join(',')})`;
+        for (let i = 0; i < stops.length - 1; i++) {
+          const a = stops[i], b = stops[i + 1];
+          if (tempC <= b.t) {
+            const f = (tempC - a.t) / (b.t - a.t);
+            const r = Math.round(a.c[0] + (b.c[0] - a.c[0]) * f);
+            const g = Math.round(a.c[1] + (b.c[1] - a.c[1]) * f);
+            const bl = Math.round(a.c[2] + (b.c[2] - a.c[2]) * f);
+            return `rgb(${r},${g},${bl})`;
+          }
+        }
+        return `rgb(${stops[stops.length - 1].c.join(',')})`;
+      }
+
+      function renderWeather(data) {
+        try {
+          if (!data || !data.current || !data.hourly || !data.daily) return;
+          STATE.weatherData = data;
+
+          // Update Sunrise/Sunset from Open-Meteo if present
+          if (data.daily.sunrise && data.daily.sunrise[0] && data.daily.sunset && data.daily.sunset[0]) {
+            const sr = new Date(data.daily.sunrise[0]);
+            const ss = new Date(data.daily.sunset[0]);
+            if (!isNaN(sr.getTime()) && !isNaN(ss.getTime())) {
+              STATE.sunriseDate = sr;
+              STATE.sunsetDate = ss;
+              renderSunWidget(new Date());
+            }
+          }
+
+          // 1. Hero Weather
+          const cur = data.current;
+          const daily = data.daily;
+          const meta = getWeatherMeta(cur.weather_code, cur.is_day);
+
+          setText('city-name', CONFIG.cityName);
+          setText('current-temp', `${Math.round(cur.temperature_2m)}°`);
+          setText('current-condition', meta.label);
+          setText('today-high', `${Math.round(daily.temperature_2m_max[0])}°`);
+          setText('today-low', `${Math.round(daily.temperature_2m_min[0])}°`);
+
+          const feels = typeof cur.apparent_temperature === 'number' ? Math.round(cur.apparent_temperature) : Math.round(cur.temperature_2m);
+          const hum = typeof cur.relative_humidity_2m === 'number' ? Math.round(cur.relative_humidity_2m) : '--';
+          const wind = typeof cur.wind_speed_10m === 'number' ? cur.wind_speed_10m.toFixed(1) : '--';
+          setText('hero-submetrics', `体感 ${feels}° ・ 湿度 ${hum}% ・ 風速 ${wind}m/s`);
+
+          // 2. Expanded 9-Hour Forecast + Sparkline
+          const { time, temperature_2m, precipitation_probability, weather_code, is_day } = data.hourly;
+          const nowMs = Date.now();
+          let startIdx = 0;
+          for (let i = 0; i < time.length; i++) {
+            if (new Date(time[i]).getTime() >= nowMs - 45 * 60000) {
+              startIdx = i;
+              break;
+            }
+          }
+
+          setText('hourly-summary', buildJapaneseSummary(data.hourly, startIdx));
+
+          const topHtml = [];
+          const tempHtml = [];
+          const sparkTemps = [];
+
+          for (let i = 0; i < CONFIG.hourlyCount; i++) {
+            const idx = startIdx + i;
+            if (idx >= time.length) break;
+            const dt = new Date(time[idx]);
+            const jstH = new Date(dt.getTime() + 9 * 3600000).getUTCHours();
+            const hLabel = i === 0 ? '現在' : `${jstH}時`;
+            const rawT = Number(temperature_2m[idx]);
+            const pop = Math.round(Number((precipitation_probability && precipitation_probability[idx]) || 0));
+            const hMeta = getWeatherMeta(weather_code[idx], is_day ? is_day[idx] : 1);
+
+            sparkTemps.push(rawT);
+
+            topHtml.push(`
+              <div class="hourly-top-cell">
+                <span class="hourly-time tabular ${i === 0 ? 'is-now' : ''}">${hLabel}</span>
+                <div class="hourly-icon" title="${hMeta.label}">${hMeta.svg}</div>
+                <span class="hourly-pop tabular ${pop >= 20 ? '' : 'is-empty'}">${pop}%</span>
+              </div>
+            `);
+
+            tempHtml.push(`
+              <div class="hourly-temp-cell">
+                <span class="hourly-temp tabular ${i === 0 ? 'is-now' : ''}">${Math.round(rawT)}°</span>
+              </div>
+            `);
+          }
+
+          setHtml('hourly-top-grid', topHtml.join(''));
+          setHtml('hourly-temp-grid', tempHtml.join(''));
+          renderHourlySparkline(sparkTemps);
+
+          // 3. Compact 7-Day Forecast
+          const dCount = Math.min(7, daily.time.length);
+          const weekMin = Math.min.apply(null, daily.temperature_2m_min.slice(0, dCount));
+          const weekMax = Math.max.apply(null, daily.temperature_2m_max.slice(0, dCount));
+          const weekSpan = Math.max(1, weekMax - weekMin);
+          const wdNames = ['日', '月', '火', '水', '木', '金', '土'];
+
+          const weeklyRows = [];
+          for (let d = 0; d < dCount; d++) {
+            const parts = String(daily.time[d]).split('-').map(Number);
+            const dow = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2])).getUTCDay();
+            const dayLabel = d === 0 ? '今日' : wdNames[dow];
+            const dMin = Number(daily.temperature_2m_min[d]);
+            const dMax = Number(daily.temperature_2m_max[d]);
+            const dPop = Math.round(Number((daily.precipitation_probability_max && daily.precipitation_probability_max[d]) || 0));
+            const dMeta = getWeatherMeta(daily.weather_code[d], 1);
+
+            const leftPct = clamp(((dMin - weekMin) / weekSpan) * 100, 0, 92);
+            const widthPct = clamp(((dMax - dMin) / weekSpan) * 100, 8, 100 - leftPct);
+            const midT = (dMin + dMax) / 2;
+            const grad = `linear-gradient(90deg, ${tempToAppleColor(dMin)} 0%, ${tempToAppleColor(midT)} 50%, ${tempToAppleColor(dMax)} 100%)`;
+
+            let nowDotHtml = '';
+            if (d === 0) {
+              const curPct = clamp(((cur.temperature_2m - weekMin) / weekSpan) * 100, leftPct, leftPct + widthPct);
+              nowDotHtml = `<span class="temp-now-dot" style="left:${curPct.toFixed(1)}%;"></span>`;
+            }
+
+            weeklyRows.push(`
+              <div class="weekly-row">
+                <span class="weekly-day ${d === 0 ? 'is-today' : ''}">${dayLabel}</span>
+                <div class="weekly-icon-wrap">
+                  <div class="weekly-icon" title="${dMeta.label}">${dMeta.svg}</div>
+                  ${dPop >= 20 ? `<span class="weekly-pop tabular">${dPop}%</span>` : ''}
+                </div>
+                <span class="weekly-min tabular">${Math.round(dMin)}°</span>
+                <div class="temp-track">
+                  <div class="temp-fill" style="left:${leftPct.toFixed(1)}%;width:${widthPct.toFixed(1)}%;background:${grad};"></div>
+                  ${nowDotHtml}
+                </div>
+                <span class="weekly-max tabular">${Math.round(dMax)}°</span>
+              </div>
+            `);
+          }
+          setHtml('weekly-list', weeklyRows.join(''));
+          setText('weather-updated', `${formatJstHm(new Date())} 更新`);
+
+          applyTheme();
+        } catch (err) {
+          console.warn('Weather render error:', err);
+        }
+      }
+
+      async function fetchWeather() {
+        const url =
+          `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.lat}&longitude=${CONFIG.lon}` +
+          `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day` +
+          `&hourly=temperature_2m,precipitation_probability,weather_code,is_day` +
+          `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset` +
+          `&wind_speed_unit=ms&timezone=Asia%2FTokyo&forecast_days=7`;
+        try {
+          const res = await fetchWithTimeout(url, 10000);
+          if (!res.ok) throw new Error(`Open-Meteo HTTP ${res.status}`);
+          const data = await res.json();
+          renderWeather(data);
+        } catch (err) {
+          console.warn('Open-Meteo fetch failed, retaining fallback:', err);
+        }
+      }
+
+      /* =======================================================================
+         8. PRECIPITATION RADAR MAP (LEAFLET + ESRI DARK + JMA / RAINVIEWER)
+         ======================================================================= */
+      function loadAsset(tag, attrs) {
+        return new Promise((resolve, reject) => {
+          const el = document.createElement(tag);
+          Object.keys(attrs).forEach((k) => el.setAttribute(k, attrs[k]));
+          el.onload = () => resolve();
+          el.onerror = () => reject(new Error(`Failed to load ${attrs.src || attrs.href}`));
+          document.head.appendChild(el);
+        });
+      }
+
+      async function ensureLeafletLoaded() {
+        if (typeof window.L !== 'undefined') return true;
+        const cdns = [
+          {
+            css: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+            js: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+          },
+          {
+            css: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
+            js: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+          },
+        ];
+        for (let i = 0; i < cdns.length; i++) {
+          try {
+            await loadAsset('link', { rel: 'stylesheet', href: cdns[i].css });
+            await loadAsset('script', { src: cdns[i].js });
+            if (typeof window.L !== 'undefined') return true;
+          } catch (err) {
+            console.warn(`Leaflet CDN ${i} failed:`, err);
+          }
+        }
+        return false;
+      }
+
+      function attachBasemap(tier) {
+        if (!STATE.map || typeof window.L === 'undefined') return;
+        if (STATE.baseLayer) {
+          STATE.map.removeLayer(STATE.baseLayer);
+          STATE.baseLayer = null;
+        }
+        STATE.baseFallbackTier = tier;
+        STATE.baseTileErrors = 0;
+
+        const providers = [
+          {
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+            cls: 'dark-base-tiles',
+            maxNativeZoom: 16,
+            attr: 'Esri',
+          },
+          {
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+            cls: 'light-base-fallback',
+            maxNativeZoom: 16,
+            attr: 'Esri',
+          },
+          {
+            url: 'https://cyberjapandata.gsi.go.jp/xyz/blank/{z}/{x}/{y}.png',
+            cls: 'gsi-blank-fallback',
+            maxNativeZoom: 14,
+            attr: '地理院タイル',
+          },
+        ];
+
+        const cfg = providers[clamp(tier, 0, providers.length - 1)];
+        const layer = L.tileLayer(cfg.url, {
+          pane: 'basemapPane',
+          className: cfg.cls,
+          maxNativeZoom: cfg.maxNativeZoom,
+          maxZoom: 18,
+          attribution: cfg.attr,
+        });
+
+        if (tier < providers.length - 1) {
+          layer.on('tileerror', () => {
+            STATE.baseTileErrors += 1;
+            if (STATE.baseTileErrors >= 4 && STATE.baseFallbackTier === tier) {
+              attachBasemap(tier + 1);
+            }
+          });
+        }
+
+        layer.addTo(STATE.map);
+        STATE.baseLayer = layer;
+      }
+
+      function setupRadarMap() {
+        try {
+          if (typeof window.L === 'undefined') return;
+          const mapEl = $('radar-map');
+          if (!mapEl) return;
+
+          const map = L.map(mapEl, {
+            center: [CONFIG.lat, CONFIG.lon],
+            zoom: CONFIG.radarZoom,
+            zoomControl: false,
+            dragging: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            boxZoom: false,
+            keyboard: false,
+            tap: false,
+            attributionControl: true,
+          });
+          STATE.map = map;
+
+          // Custom Z-index panes so radar sits strictly above basemap and below markers/labels
+          map.createPane('basemapPane');
+          map.getPane('basemapPane').style.zIndex = 200;
+          map.createPane('radarPane');
+          map.getPane('radarPane').style.zIndex = 350;
+          map.createPane('ringPane');
+          map.getPane('ringPane').style.zIndex = 410;
+          map.createPane('cityLabelPane');
+          map.getPane('cityLabelPane').style.zIndex = 460;
+
+          attachBasemap(0);
+
+          // Subtle dashed white-neon 50km & 120km distance rings centered on Yokohama
+          const ringOpts = {
+            pane: 'ringPane',
+            color: 'rgba(255, 255, 255, 0.24)',
+            weight: 1,
+            dashArray: '4 6',
+            fill: false,
+            interactive: false,
+          };
+          L.circle([CONFIG.lat, CONFIG.lon], Object.assign({ radius: 50000 }, ringOpts)).addTo(map);
+          L.circle([CONFIG.lat, CONFIG.lon], Object.assign({ radius: 120000 }, ringOpts)).addTo(map);
+
+          // Glowing Apple Maps pulsing blue dot at Yokohama
+          const homeIcon = L.divIcon({
+            className: '',
+            html: '<div class="home-pulse-marker"><div class="home-pulse-ring"></div><div class="home-pulse-core"></div></div>',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+          });
+          L.marker([CONFIG.lat, CONFIG.lon], { icon: homeIcon, interactive: false, pane: 'cityLabelPane' }).addTo(map);
+
+          // Minimal low-opacity Japanese city labels only
+          const cities = [
+            { name: '横浜', lat: CONFIG.lat - 0.16, lon: CONFIG.lon + 0.04, home: true },
+            { name: '東京', lat: 35.72, lon: 139.77, home: false },
+            { name: '千葉', lat: 35.58, lon: 140.26, home: false },
+            { name: '静岡', lat: 34.97, lon: 138.38, home: false },
+            { name: '長野', lat: 36.65, lon: 138.19, home: false },
+          ];
+          cities.forEach((c) => {
+            const labelIcon = L.divIcon({
+              className: '',
+              html: `<div class="minimal-city-label ${c.home ? 'is-home' : ''}">${c.name}</div>`,
+              iconSize: [0, 0],
+            });
+            L.marker([c.lat, c.lon], { icon: labelIcon, interactive: false, pane: 'cityLabelPane' }).addTo(map);
+          });
+
+          // Handle viewport resize cleanly
+          window.addEventListener('resize', () => {
+            if (STATE.map) STATE.map.invalidateSize();
+          });
+          setTimeout(() => {
+            if (STATE.map) STATE.map.invalidateSize();
+          }, 300);
+        } catch (err) {
+          console.warn('Radar map init error:', err);
+        }
+      }
+
+      function parseJmaUtc(str) {
+        return new Date(Date.UTC(
+          Number(str.slice(0, 4)),
+          Number(str.slice(4, 6)) - 1,
+          Number(str.slice(6, 8)),
+          Number(str.slice(8, 10)),
+          Number(str.slice(10, 12)),
+          Number(str.slice(12, 14))
+        ));
+      }
+
+      function clearRadarFrames() {
+        if (STATE.radarFrames.length && STATE.map) {
+          STATE.radarFrames.forEach((f) => {
+            if (f.layer) STATE.map.removeLayer(f.layer);
+          });
+        }
+        STATE.radarFrames = [];
+        STATE.radarActiveIdx = -1;
+      }
+
+      function setRadarFrames(frameSpecs, sourceLabel) {
+        if (!STATE.map || !frameSpecs.length) return;
+        clearRadarFrames();
+
+        STATE.radarFrames = frameSpecs.map((spec) => {
+          const layer = L.tileLayer(spec.url, {
+            pane: 'radarPane',
+            className: 'radar-tile-layer',
+            opacity: 0,
+            maxNativeZoom: spec.maxNativeZoom || 10,
+            maxZoom: 18,
+            attribution: sourceLabel,
+          });
+          layer.addTo(STATE.map);
+          return {
+            time: spec.time,
+            isForecast: spec.isForecast,
+            layer,
+          };
+        });
+
+        setText('radar-source-text', sourceLabel);
+        setText('radar-start-time', formatJstHm(STATE.radarFrames[0].time));
+        const lastFrame = STATE.radarFrames[STATE.radarFrames.length - 1];
+        setText('radar-end-time', `${lastFrame.isForecast ? '予測 ' : ''}${formatJstHm(lastFrame.time)}`);
+
+        STATE.radarAnimStartMs = performance.now();
+        activateRadarFrame(0);
+        startRadarLoop();
+      }
+
+      function activateRadarFrame(idx) {
+        if (idx === STATE.radarActiveIdx || !STATE.radarFrames[idx]) return;
+        STATE.radarFrames.forEach((f, i) => {
+          f.layer.setOpacity(i === idx ? 0.78 : 0);
+        });
+        STATE.radarActiveIdx = idx;
+
+        const cur = STATE.radarFrames[idx];
+        const prefix = cur.isForecast ? '予測' : '実況';
+        setText('radar-frame-label', `${prefix} ${formatJstHm(cur.time)}`);
+        const dot = $('radar-mode-dot');
+        if (dot) {
+          dot.className = cur.isForecast ? 'live-dot is-cyan' : 'live-dot';
+        }
+      }
+
+      function startRadarLoop() {
+        if (STATE.radarRafId) cancelAnimationFrame(STATE.radarRafId);
+
+        const step = (now) => {
+          const n = STATE.radarFrames.length;
+          if (n > 0) {
+            const perFrameMs = 780;
+            const travelMs = Math.max(1, n - 1) * perFrameMs;
+            const pauseMs = 2200;
+            const totalCycleMs = travelMs + pauseMs;
+            const elapsed = (now - STATE.radarAnimStartMs) % totalCycleMs;
+
+            const progress = elapsed >= travelMs ? 1 : elapsed / travelMs;
+            const pct = (progress * 100).toFixed(2);
+
+            const fillEl = $('radar-progress-fill');
+            const headEl = $('radar-playhead');
+            if (fillEl) fillEl.style.width = `${pct}%`;
+            if (headEl) headEl.style.left = `${pct}%`;
+
+            const targetIdx = Math.min(n - 1, Math.floor(progress * (n - 1) + 0.0001));
+            activateRadarFrame(targetIdx);
+          }
+          STATE.radarRafId = requestAnimationFrame(step);
+        };
+
+        STATE.radarRafId = requestAnimationFrame(step);
+      }
+
+      async function fetchJmaNowcast() {
+        const [n1Res, n2Res] = await Promise.all([
+          fetchWithTimeout('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json', 8500),
+          fetchWithTimeout('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N2.json', 8500).catch(() => null),
+        ]);
+        if (!n1Res.ok) throw new Error(`JMA N1 HTTP ${n1Res.status}`);
+
+        const n1List = await n1Res.json();
+        const n2List = n2Res && n2Res.ok ? await n2Res.json() : [];
+
+        // Sort ascending by validtime
+        const obs = (Array.isArray(n1List) ? n1List : [])
+          .filter((x) => x && x.basetime && x.validtime)
+          .sort((a, b) => a.validtime.localeCompare(b.validtime));
+
+        const fcast = (Array.isArray(n2List) ? n2List : [])
+          .filter((x) => x && x.basetime && x.validtime)
+          .sort((a, b) => a.validtime.localeCompare(b.validtime));
+
+        // Sample cleanly (~6 obs ending at latest + ~6 forecast up to +60m) for fast smooth playback
+        const pickedObs = [];
+        for (let i = 0; i < obs.length; i++) {
+          if (i === obs.length - 1 || i % 2 === 0) pickedObs.push(obs[i]);
+        }
+        const recentObs = pickedObs.slice(-7);
+
+        const latestObsValid = recentObs.length ? recentObs[recentObs.length - 1].validtime : '';
+        const pickedFcast = [];
+        for (let i = 0; i < fcast.length; i++) {
+          if (fcast[i].validtime > latestObsValid && (i % 2 === 1 || i === fcast.length - 1)) {
+            pickedFcast.push(fcast[i]);
+          }
+        }
+        const shortFcast = pickedFcast.slice(0, 6);
+
+        const specs = [
+          ...recentObs.map((item) => ({
+            time: parseJmaUtc(item.validtime),
+            isForecast: false,
+            maxNativeZoom: 10,
+            url: `https://www.jma.go.jp/bosai/jmatile/data/nowc/${item.basetime}/none/${item.validtime}/surf/hrpns/{z}/{x}/{y}.png`,
+          })),
+          ...shortFcast.map((item) => ({
+            time: parseJmaUtc(item.validtime),
+            isForecast: true,
+            maxNativeZoom: 10,
+            url: `https://www.jma.go.jp/bosai/jmatile/data/nowc/${item.basetime}/none/${item.validtime}/surf/hrpns/{z}/{x}/{y}.png`,
+          })),
+        ];
+
+        if (!specs.length) throw new Error('JMA returned 0 frames');
+        setRadarFrames(specs, '気象庁ナウキャスト');
+      }
+
+      async function fetchRainViewer() {
+        const res = await fetchWithTimeout('https://api.rainviewer.com/public/weather-maps.json', 8500);
+        if (!res.ok) throw new Error(`RainViewer HTTP ${res.status}`);
+        const json = await res.json();
+        const host = json.host || 'https://tilecache.rainviewer.com';
+        const past = (json.radar && json.radar.past) || [];
+        const nowcast = (json.radar && json.radar.nowcast) || [];
+
+        const specs = [
+          ...past.slice(-7).map((f) => ({
+            time: new Date(f.time * 1000),
+            isForecast: false,
+            maxNativeZoom: 10,
+            url: `${host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`,
+          })),
+          ...nowcast.slice(0, 4).map((f) => ({
+            time: new Date(f.time * 1000),
+            isForecast: true,
+            maxNativeZoom: 10,
+            url: `${host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`,
+          })),
+        ];
+        if (!specs.length) throw new Error('RainViewer returned 0 frames');
+        setRadarFrames(specs, 'RainViewer');
+      }
+
+      async function refreshRadarData() {
+        try {
+          await fetchJmaNowcast();
+        } catch (err) {
+          console.warn('JMA Nowcast unavailable, falling back to RainViewer:', err);
+          try {
+            await fetchRainViewer();
+          } catch (rvErr) {
+            console.warn('RainViewer fallback also failed:', rvErr);
+            setText('radar-source-text', '待機中');
+            setText('radar-frame-label', `待機 ${formatJstHm(new Date())}`);
+          }
+        }
+      }
+
+      /* =======================================================================
+         9. ISS LIVE TRACKER (ORBITAL PROPAGATION + WHERETHEISS API)
+         ======================================================================= */
+      function haversineKm(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const rad = Math.PI / 180;
+        const dLat = (lat2 - lat1) * rad;
+        const dLon = (lon2 - lon1) * rad;
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      }
+
+      function getIssRegionLabel(lat, lon) {
+        if (lat >= 24 && lat <= 47 && lon >= 122 && lon <= 150) return '日本上空付近';
+        if (lat >= 15 && lat <= 72 && lon >= -168 && lon <= -52) return '北米上空';
+        if (lat >= -56 && lat <= 15 && lon >= -82 && lon <= -34) return '南米上空';
+        if (lat >= 35 && lat <= 72 && lon >= -12 && lon <= 45) return 'ヨーロッパ上空';
+        if (lat >= -36 && lat <= 35 && lon >= -18 && lon <= 52) return 'アフリカ上空';
+        if (lat >= 8 && lat <= 75 && lon >= 45 && lon <= 145) return 'ユーラシア上空';
+        if (lat >= -47 && lat <= -8 && lon >= 110 && lon <= 180) return 'オセアニア上空';
+        if (lat >= -45 && lat <= 25 && lon >= 45 && lon <= 112) return 'インド洋上空';
+        if (lon >= -68 && lon <= 10) return '大西洋上空';
+        return '太平洋上空';
+      }
+
+      function computeOrbitPoint(uRad, lonNodeDeg, dtMin) {
+        const inc = 51.64 * (Math.PI / 180);
+        const sinLat = Math.sin(inc) * Math.sin(uRad);
+        const latDeg = Math.asin(clamp(sinLat, -1, 1)) * (180 / Math.PI);
+        const rawLon = Math.atan2(Math.cos(inc) * Math.sin(uRad), Math.cos(uRad)) * (180 / Math.PI);
+        const earthRotDeg = (360 / 1436.07) * dtMin;
+        let lonDeg = lonNodeDeg + rawLon - earthRotDeg;
+        while (lonDeg > 180) lonDeg -= 360;
+        while (lonDeg < -180) lonDeg += 360;
+        return { lat: latDeg, lon: lonDeg };
+      }
+
+      function renderIssState() {
+        try {
+          const iss = STATE.iss;
+          const inc = 51.64 * (Math.PI / 180);
+          const ratio = clamp(Math.sin(iss.lat * Math.PI / 180) / Math.sin(inc), -1, 1);
+          let u0 = Math.asin(ratio);
+          if (!iss.ascending) u0 = Math.PI - u0;
+
+          const baseRawLon = Math.atan2(Math.cos(inc) * Math.sin(u0), Math.cos(u0)) * (180 / Math.PI);
+          const lonNodeDeg = iss.lon - baseRawLon;
+
+          // Build clean ground track (-25m to +70m), splitting cleanly at ±180° antimeridian
+          const periodMin = 92.68;
+          let pathD = '';
+          let prevLon = null;
+          for (let dt = -24; dt <= 70; dt += 1.5) {
+            const u = u0 + (dt / periodMin) * Math.PI * 2;
+            const pt = computeOrbitPoint(u, lonNodeDeg, dt);
+            const x = (pt.lon + 180).toFixed(1);
+            const y = (90 - pt.lat).toFixed(1);
+            if (prevLon === null || Math.abs(pt.lon - prevLon) > 160) {
+              pathD += `M ${x} ${y} `;
+            } else {
+              pathD += `L ${x} ${y} `;
+            }
+            prevLon = pt.lon;
+          }
+
+          const orbitPath = $('iss-orbit-path');
+          const orbitGlow = $('iss-orbit-glow');
+          if (orbitPath) orbitPath.setAttribute('d', pathD.trim());
+          if (orbitGlow) orbitGlow.setAttribute('d', pathD.trim());
+
+          const mx = (iss.lon + 180).toFixed(2);
+          const my = (90 - iss.lat).toFixed(2);
+          const marker = $('iss-marker');
+          if (marker) marker.setAttribute('transform', `translate(${mx}, ${my})`);
+
+          // Update telemetry readouts
+          const latStr = `${Math.abs(iss.lat).toFixed(1)}°${iss.lat >= 0 ? 'N' : 'S'}`;
+          const lonStr = `${Math.abs(iss.lon).toFixed(1)}°${iss.lon >= 0 ? 'E' : 'W'}`;
+          const distKm = Math.round(haversineKm(iss.lat, iss.lon, CONFIG.lat, CONFIG.lon));
+
+          setText('iss-coords', `${latStr} / ${lonStr}`);
+          setText('iss-distance', `${distKm.toLocaleString('ja-JP')} km`);
+          setText('iss-altitude', `${Math.round(iss.altitude)} km`);
+          setText('iss-velocity', `${Math.round(iss.velocity).toLocaleString('ja-JP')} km/h`);
+          setText('iss-region', getIssRegionLabel(iss.lat, iss.lon));
+        } catch (err) {
+          console.warn('ISS render error:', err);
+        }
+      }
+
+      function stepIssPhysics() {
+        const now = Date.now();
+        const dtSec = (now - STATE.iss.lastUpdateMs) / 1000;
+        if (dtSec <= 0 || dtSec > 10) {
+          STATE.iss.lastUpdateMs = now;
+          return;
+        }
+        STATE.iss.lastUpdateMs = now;
+
+        const inc = 51.64 * (Math.PI / 180);
+        const ratio = clamp(Math.sin(STATE.iss.lat * Math.PI / 180) / Math.sin(inc), -1, 1);
+        let u0 = Math.asin(ratio);
+        if (!STATE.iss.ascending) u0 = Math.PI - u0;
+
+        const baseRawLon = Math.atan2(Math.cos(inc) * Math.sin(u0), Math.cos(u0)) * (180 / Math.PI);
+        const lonNodeDeg = STATE.iss.lon - baseRawLon;
+
+        const dtMin = dtSec / 60;
+        const u1 = u0 + (dtMin / 92.68) * Math.PI * 2;
+        const nextPt = computeOrbitPoint(u1, lonNodeDeg, dtMin);
+
+        STATE.iss.ascending = Math.cos(u1) >= 0;
+        STATE.iss.lat = nextPt.lat;
+        STATE.iss.lon = nextPt.lon;
+        renderIssState();
+      }
+
+      async function syncIssApi() {
+        try {
+          const res = await fetchWithTimeout('https://api.wheretheiss.at/v1/satellites/25544', 7500);
+          if (!res.ok) throw new Error(`ISS HTTP ${res.status}`);
+          const d = await res.json();
+          if (typeof d.latitude === 'number' && typeof d.longitude === 'number') {
+            if (STATE.iss.live && Math.abs(d.latitude - STATE.iss.lat) > 0.001) {
+              STATE.iss.ascending = d.latitude > STATE.iss.lat;
+            }
+            STATE.iss.lat = d.latitude;
+            STATE.iss.lon = d.longitude;
+            STATE.iss.altitude = Number(d.altitude) || 418;
+            STATE.iss.velocity = Number(d.velocity) || 27580;
+            STATE.iss.lastUpdateMs = Date.now();
+            STATE.iss.live = true;
+            setText('iss-status-text', 'LIVE');
+            const dot = $('iss-status-dot');
+            if (dot) dot.className = 'live-dot is-cyan';
+            renderIssState();
+          }
+        } catch (err) {
+          console.warn('ISS API sync failed, continuing orbital propagation:', err);
+          if (!STATE.iss.live) {
+            setText('iss-status-text', '軌道予測');
+            const dot = $('iss-status-dot');
+            if (dot) dot.className = 'live-dot is-amber';
+          }
+        }
+      }
+
+      /* =======================================================================
+         10. REAL-TIME EARTHQUAKE MONITOR (P2P QUAKE API v2)
+         ======================================================================= */
+      function scaleInfo(scale) {
+        const map = {
+          10: { text: '1', bg: 'rgba(59, 130, 246, 0.72)' },
+          20: { text: '2', bg: 'rgba(14, 165, 233, 0.78)' },
+          30: { text: '3', bg: 'rgba(16, 185, 129, 0.80)' },
+          40: { text: '4', bg: 'rgba(234, 179, 8, 0.84)' },
+          45: { text: '5弱', bg: 'rgba(249, 115, 22, 0.88)' },
+          50: { text: '5強', bg: 'rgba(234, 88, 12, 0.90)' },
+          55: { text: '6弱', bg: 'rgba(239, 68, 68, 0.92)' },
+          60: { text: '6強', bg: 'rgba(185, 28, 28, 0.95)' },
+          70: { text: '7', bg: 'rgba(147, 51, 234, 0.95)' },
+        };
+        return map[scale] || { text: '-', bg: 'rgba(71, 85, 105, 0.72)' };
+      }
+
+      function tsunamiInfo(code) {
+        switch (code) {
+          case 'None':
+            return { text: '津波の心配なし', warn: false };
+          case 'NonEffective':
+            return { text: '若干の海面変動', warn: false };
+          case 'Checking':
+            return { text: '津波有無を調査中', warn: true };
+          case 'Watch':
+            return { text: '津波注意報あり', warn: true };
+          case 'Warning':
+            return { text: '津波警報発表中', warn: true };
+          default:
+            return { text: '津波の心配なし', warn: false };
+        }
+      }
+
+      function formatP2pTime(timeStr) {
+        if (!timeStr) return '--/-- --:--';
+        // Format: "2026/11/19 18:12:00"
+        const m = String(timeStr).match(/(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
+        if (!m) return timeStr;
+        return `${Number(m[2])}/${Number(m[3])} ${m[4]}:${m[5]}`;
+      }
+
+      function buildFallbackQuakes() {
+        return [
+          {
+            earthquake: {
+              time: '2026/11/19 18:12:00',
+              maxScale: 20,
+              domesticTsunami: 'None',
+              hypocenter: { name: '千葉県北西部', magnitude: 3.8, depth: 70 },
+            },
+          },
+          {
+            earthquake: {
+              time: '2026/11/19 15:40:00',
+              maxScale: 10,
+              domesticTsunami: 'None',
+              hypocenter: { name: '茨城県沖', magnitude: 3.4, depth: 50 },
+            },
+          },
+          {
+            earthquake: {
+              time: '2026/11/19 11:05:00',
+              maxScale: 20,
+              domesticTsunami: 'None',
+              hypocenter: { name: '福島県沖', magnitude: 4.1, depth: 40 },
+            },
+          },
+          {
+            earthquake: {
+              time: '2026/11/19 06:22:00',
+              maxScale: 10,
+              domesticTsunami: 'None',
+              hypocenter: { name: '長野県中部', magnitude: 2.9, depth: 10 },
+            },
+          },
+          {
+            earthquake: {
+              time: '2026/11/18 22:18:00',
+              maxScale: 30,
+              domesticTsunami: 'None',
+              hypocenter: { name: '宮城県沖', magnitude: 4.5, depth: 50 },
+            },
+          },
+        ];
+      }
+
+      function renderQuakes(items) {
+        try {
+          if (!Array.isArray(items) || !items.length) return;
+          const latest = items[0].earthquake || {};
+          const hypo = latest.hypocenter || {};
+          const sc = scaleInfo(latest.maxScale);
+          const ts = tsunamiInfo(latest.domesticTsunami);
+
+          const scaleBox = $('quake-hero-scale-box');
+          if (scaleBox) scaleBox.style.background = sc.bg;
+          setText('quake-hero-scale', sc.text);
+          setText('quake-hero-epicenter', hypo.name || '震源地調査中');
+
+          const magText = typeof hypo.magnitude === 'number' && hypo.magnitude >= 0 ? `M${hypo.magnitude.toFixed(1)}` : 'M調査中';
+          const depthText = typeof hypo.depth === 'number' && hypo.depth >= 0
+            ? (hypo.depth === 0 ? 'ごく浅い' : `深さ ${hypo.depth}km`)
+            : '深さ 調査中';
+          setText('quake-hero-magdepth', `${magText} ・ ${depthText}`);
+          setText('quake-hero-time', formatP2pTime(latest.time));
+
+          const tsBadge = $('quake-hero-tsunami');
+          if (tsBadge) {
+            tsBadge.textContent = ts.text;
+            tsBadge.className = `quake-tsunami-badge ${ts.warn ? 'is-warn' : 'is-safe'}`;
+          }
+
+          // Render next 4 recent earthquakes
+          const listHtml = items.slice(1, 5).map((entry) => {
+            const eq = entry.earthquake || {};
+            const h = eq.hypocenter || {};
+            const s = scaleInfo(eq.maxScale);
+            const mStr = typeof h.magnitude === 'number' && h.magnitude >= 0 ? `M${h.magnitude.toFixed(1)}` : 'M-.-';
+            return `
+              <div class="quake-row">
+                <span class="quake-row-time">${formatP2pTime(eq.time)}</span>
+                <span class="quake-row-name ellipsis">${h.name || '震源調査中'}</span>
+                <span class="quake-row-mag">${mStr}</span>
+                <span class="quake-mini-badge" style="background:${s.bg};">${s.text}</span>
+              </div>
+            `;
+          }).join('');
+          setHtml('quake-list', listHtml);
+        } catch (err) {
+          console.warn('Quake render error:', err);
+        }
+      }
+
+      async function fetchQuakes() {
+        try {
+          const res = await fetchWithTimeout('https://api.p2pquake.net/v2/history?codes=551&limit=5', 10000);
+          if (!res.ok) throw new Error(`P2P Quake HTTP ${res.status}`);
+          const data = await res.json();
+          if (Array.isArray(data) && data.length) {
+            renderQuakes(data);
+            setText('quake-status-text', 'P2P地震情報');
+            const dot = $('quake-status-dot');
+            if (dot) dot.className = 'live-dot';
+          }
+        } catch (err) {
+          console.warn('P2P Quake fetch failed, using fallback:', err);
+          setText('quake-status-text', '待機中');
+          const dot = $('quake-status-dot');
+          if (dot) dot.className = 'live-dot is-amber';
+        }
+      }
+
+      /* =======================================================================
+         11. BOOTSTRAP & PERIODIC TIMERS
+         ======================================================================= */
+      async function initDashboard() {
+        // 1. Start Animated Sky & Theme Toggle Button
+        SkyEngine.init();
+        const themeBtn = $('theme-toggle-btn');
+        if (themeBtn) {
+          themeBtn.addEventListener('click', () => {
+            STATE.themeIdx = (STATE.themeIdx + 1) % THEME_MODES.length;
+            applyTheme();
+          });
+        }
+
+        // 2. Render Instant Fallback / Astronomical State Immediately (Zero Blank Screen)
+        tickClock();
+        renderSunWidget(new Date());
+        renderMoonWidget(new Date());
+        renderWeather(buildFallbackWeather());
+        renderIssState();
+        renderQuakes(buildFallbackQuakes());
+
+        // 3. Start Real-time Ticks (Clock & 1s Smooth ISS Propagation)
+        setInterval(tickClock, 1000);
+        setInterval(stepIssPhysics, 1000);
+
+        // 4. Kick Off Live API Fetches Independently
+        fetchWeather();
+        syncIssApi();
+        fetchQuakes();
+
+        // 5. Load Leaflet & Initialize Radar Map
+        const leafletReady = await ensureLeafletLoaded();
+        if (leafletReady) {
+          setupRadarMap();
+          refreshRadarData();
+        } else {
+          setText('radar-source-text', '地図読込失敗');
+        }
+
+        // 6. Schedule Automatic Signage Refresh Intervals
+        setInterval(fetchWeather, CONFIG.weatherRefreshMin * 60 * 1000);
+        setInterval(refreshRadarData, CONFIG.radarRefreshMin * 60 * 1000);
+        setInterval(syncIssApi, CONFIG.issSyncSec * 1000);
+        setInterval(fetchQuakes, CONFIG.quakeRefreshSec * 1000);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDashboard);
+      } else {
+        initDashboard();
+      }
+    })();
+  </script>
+</body>
+</html>
