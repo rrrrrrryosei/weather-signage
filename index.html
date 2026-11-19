@@ -151,7 +151,6 @@
       transition: background 1.2s ease, filter 1.6s ease, opacity 1.6s ease;
     }
 
-    /* Seamless radial ambient light orbs — fade completely to 0% before radius 60% */
     .sky-aura {
       position: absolute;
       border-radius: 50%;
@@ -190,7 +189,7 @@
       height: 100%;
     }
 
-    /* Night Dimming Backdrop Veil (sits between sky and dashboard) */
+    /* Night Dimming Backdrop Veil */
     #night-dim-veil {
       position: fixed;
       inset: 0;
@@ -234,7 +233,6 @@
       100% { transform: translate(0px, 0px); }
     }
 
-    /* Keep Clock & Current Weather softly glowing while secondary panels recede */
     body[data-night-dim="on"] .hero-block {
       opacity: 0.78;
       filter: brightness(0.86) sepia(0.10);
@@ -250,7 +248,6 @@
         inset 0 0 14px rgba(255, 255, 255, 0.025);
     }
 
-    /* Keep Map card slightly interactive when hovered/toggled, and wake up on strong quake */
     body[data-night-dim="on"] .glass-card:hover {
       opacity: 0.85;
       filter: brightness(0.95);
@@ -265,7 +262,7 @@
     }
 
     /* =====================================================================
-       3. MAIN GRID LAYOUT (NO OVERFLOW:HIDDEN ON GRID CONTAINERS SO GLOW BREATHES)
+       3. MAIN GRID LAYOUT
        ===================================================================== */
     .dashboard {
       position: relative;
@@ -283,7 +280,8 @@
       min-width: 0;
       min-height: 0;
       display: grid;
-      grid-template-rows: auto minmax(0, 1.08fr) minmax(0, 1.12fr) auto;
+      /* Row 2 (Hourly) reduced to roughly half previous height */
+      grid-template-rows: auto minmax(0, 0.56fr) minmax(0, 1.54fr) auto;
       gap: clamp(11px, 1.35vh, 18px);
     }
 
@@ -358,26 +356,20 @@
       white-space: nowrap;
     }
     .card-title svg {
-      width: clamp(12px, 1.5vh, 15px);
-      height: clamp(12px, 1.5vh, 15px);
-      opacity: 0.9;
+      width: clamp(13px, 1.65vh, 17px);
+      height: clamp(13px, 1.65vh, 17px);
+      opacity: 0.92;
       flex-shrink: 0;
     }
 
-    .card-meta {
-      font-size: clamp(9px, 1.15vh, 12px);
-      color: var(--text-dim);
-      white-space: nowrap;
-    }
-
     /* =====================================================================
-       5. LEFT ROW 1: FLOATING HERO CLOCK & CURRENT WEATHER
+       5. LEFT ROW 1: COMPACT CLOCK & PROMINENT CURRENT WEATHER
        ===================================================================== */
     .hero-block {
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
-      gap: 12px;
+      gap: clamp(10px, 1.2vw, 18px);
       padding: clamp(2px, 0.4vh, 6px) clamp(4px, 0.5vw, 8px);
       min-width: 0;
       transition: opacity 1.4s ease, filter 1.4s ease;
@@ -388,39 +380,41 @@
       flex-direction: column;
       justify-content: flex-end;
       min-width: 0;
+      flex-shrink: 0;
     }
 
     .hero-time-row {
       display: flex;
       align-items: baseline;
-      gap: clamp(4px, 0.5vw, 8px);
+      gap: clamp(3px, 0.35vw, 6px);
       line-height: 0.95;
     }
 
+    /* Smaller, understated clock */
     .hero-time {
-      font-size: clamp(34px, 6.2vh, 68px);
+      font-size: clamp(24px, 4.1vh, 46px);
       font-weight: 200;
-      letter-spacing: -0.025em;
+      letter-spacing: -0.02em;
       color: #ffffff;
       text-shadow: var(--glow-hero);
     }
 
     .hero-sec {
-      font-size: clamp(13px, 2.2vh, 24px);
+      font-size: clamp(10.5px, 1.6vh, 18px);
       font-weight: 300;
-      color: rgba(255, 255, 255, 0.68);
+      color: rgba(255, 255, 255, 0.65);
       text-shadow: var(--glow-soft);
     }
 
     .hero-date-row {
-      margin-top: clamp(3px, 0.5vh, 6px);
+      margin-top: clamp(3px, 0.45vh, 6px);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .hero-date {
-      font-size: clamp(10.5px, 1.45vh, 15px);
+      font-size: clamp(9.5px, 1.25vh, 13.5px);
       font-weight: 500;
       color: var(--text-soft);
       text-shadow: var(--glow-soft);
@@ -434,8 +428,8 @@
       border-radius: var(--radius-pill);
       background: rgba(255, 232, 195, 0.14);
       color: rgba(255, 236, 206, 0.92);
-      padding: 2px 8px;
-      font-size: clamp(8px, 1.05vh, 11px);
+      padding: 2px 7px;
+      font-size: clamp(7.5px, 0.95vh, 10.5px);
       font-weight: 600;
       letter-spacing: 0.03em;
       white-space: nowrap;
@@ -444,6 +438,7 @@
       display: inline-flex;
     }
 
+    /* Larger, high-legibility current weather readout */
     .hero-weather-wrap {
       display: flex;
       align-items: center;
@@ -455,7 +450,7 @@
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: clamp(2px, 0.3vh, 4px);
+      gap: clamp(2px, 0.35vh, 5px);
       min-width: 0;
     }
 
@@ -463,59 +458,52 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      font-size: clamp(12px, 1.75vh, 19px);
+      font-size: clamp(14px, 2.05vh, 23px);
       font-weight: 600;
       color: #ffffff;
       text-shadow: var(--glow-soft);
+      line-height: 1.1;
     }
 
     .hero-cond-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: clamp(10px, 1.35vh, 14px);
-      color: var(--text-soft);
+      gap: clamp(6px, 0.7vw, 12px);
+      font-size: clamp(12.5px, 1.85vh, 20px);
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
       white-space: nowrap;
+      line-height: 1.15;
     }
 
     .hero-sub-metrics {
-      font-size: clamp(9px, 1.15vh, 12px);
-      color: var(--text-dim);
+      font-size: clamp(10.5px, 1.48vh, 16px);
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.86);
+      text-shadow: var(--glow-soft);
       white-space: nowrap;
+      line-height: 1.15;
     }
 
     .hero-temp {
-      font-size: clamp(38px, 6.8vh, 74px);
+      font-size: clamp(46px, 8.4vh, 92px);
       font-weight: 200;
-      line-height: 0.92;
-      letter-spacing: -0.03em;
+      line-height: 0.88;
+      letter-spacing: -0.035em;
       color: #ffffff;
       text-shadow: var(--glow-hero);
       white-space: nowrap;
     }
 
     /* =====================================================================
-       6. LEFT ROW 2: EXPANDED HOURLY FORECAST + LUMINOUS BEZIER SPARKLINE
+       6. LEFT ROW 2: COMPACT 12-HOUR FORECAST + SPARKLINE (NO TITLE)
        ===================================================================== */
     .hourly-card {
-      padding: clamp(8px, 1.1vh, 14px) clamp(11px, 1.2vw, 16px);
+      padding: clamp(6px, 0.8vh, 11px) clamp(8px, 0.9vw, 13px);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-    }
-
-    .hourly-summary {
-      font-size: clamp(9.5px, 1.32vh, 14px);
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.94);
-      text-shadow: var(--glow-soft);
-      padding-bottom: clamp(5px, 0.65vh, 8px);
-      margin-bottom: clamp(5px, 0.7vh, 10px);
-      border-bottom: 1px solid var(--glass-divider);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex-shrink: 0;
     }
 
     .hourly-body {
@@ -524,13 +512,13 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: clamp(3px, 0.5vh, 8px);
+      gap: clamp(2px, 0.35vh, 5px);
     }
 
     .hourly-top-grid,
     .hourly-temp-grid {
       display: grid;
-      grid-template-columns: repeat(9, minmax(0, 1fr));
+      grid-template-columns: repeat(12, minmax(0, 1fr));
       align-items: center;
       flex-shrink: 0;
     }
@@ -539,14 +527,15 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: clamp(3px, 0.45vh, 6px);
+      gap: clamp(1.5px, 0.25vh, 4px);
     }
 
     .hourly-time {
-      font-size: clamp(9px, 1.2vh, 13px);
+      font-size: clamp(7.5px, 1.02vh, 11.5px);
       font-weight: 500;
       color: rgba(255, 255, 255, 0.78);
       line-height: 1;
+      white-space: nowrap;
     }
     .hourly-time.is-now {
       font-weight: 700;
@@ -555,8 +544,8 @@
     }
 
     .hourly-icon {
-      width: clamp(22px, 3.1vh, 36px);
-      height: clamp(22px, 3.1vh, 36px);
+      width: clamp(16px, 2.3vh, 28px);
+      height: clamp(16px, 2.3vh, 28px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -564,18 +553,19 @@
     .hourly-icon svg {
       width: 100%;
       height: 100%;
-      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.25));
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.24));
     }
 
     .hourly-pop {
-      height: clamp(11px, 1.35vh, 14px);
-      font-size: clamp(8.5px, 1.12vh, 12px);
+      height: clamp(9px, 1.15vh, 12px);
+      font-size: clamp(7px, 0.92vh, 10.5px);
       font-weight: 700;
       color: var(--cyan);
       text-shadow: var(--glow-cyan);
       display: flex;
       align-items: center;
       justify-content: center;
+      line-height: 1;
     }
     .hourly-pop.is-empty {
       visibility: hidden;
@@ -584,7 +574,7 @@
     .hourly-spark-wrap {
       position: relative;
       flex: 1;
-      min-height: 26px;
+      min-height: 16px;
       width: 100%;
     }
     .hourly-spark-svg {
@@ -601,35 +591,35 @@
     }
     .spark-dot {
       position: absolute;
-      width: clamp(6px, 0.85vh, 9px);
-      height: clamp(6px, 0.85vh, 9px);
+      width: clamp(4.5px, 0.65vh, 7.5px);
+      height: clamp(4.5px, 0.65vh, 7.5px);
       border-radius: 50%;
       background: #ffffff;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.92), 0 0 16px rgba(180, 225, 255, 0.55);
+      box-shadow: 0 0 7px rgba(255, 255, 255, 0.92), 0 0 14px rgba(180, 225, 255, 0.55);
     }
     .spark-dot.is-now {
-      width: clamp(8px, 1.05vh, 11px);
-      height: clamp(8px, 1.05vh, 11px);
+      width: clamp(6px, 0.82vh, 9px);
+      height: clamp(6px, 0.82vh, 9px);
       background: var(--cyan);
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.92), 0 0 12px rgba(100, 210, 255, 0.95);
+      box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.92), 0 0 10px rgba(100, 210, 255, 0.95);
     }
 
     .hourly-temp-cell {
       text-align: center;
-      font-size: clamp(10.5px, 1.55vh, 16px);
+      font-size: clamp(9px, 1.32vh, 14px);
       font-weight: 600;
       color: #ffffff;
       text-shadow: var(--glow-soft);
-      line-height: 1.1;
+      line-height: 1.05;
     }
 
     /* =====================================================================
-       7. LEFT ROW 3: COMPACT 7-DAY FORECAST & CALENDAR
+       7. LEFT ROW 3: HEADERLESS 7-DAY FORECAST & CALENDAR
        ===================================================================== */
     .daily-card,
     .calendar-card {
-      padding: clamp(7px, 1vh, 12px) clamp(10px, 1.1vw, 14px);
+      padding: clamp(8px, 1.1vh, 14px) clamp(10px, 1.1vw, 15px);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -645,9 +635,9 @@
 
     .daily-row {
       display: grid;
-      grid-template-columns: clamp(28px, 3vw, 38px) clamp(38px, 4.2vw, 52px) clamp(24px, 2.4vw, 32px) minmax(0, 1fr) clamp(24px, 2.4vw, 32px);
+      grid-template-columns: clamp(28px, 3vw, 40px) clamp(40px, 4.4vw, 56px) clamp(24px, 2.5vw, 34px) minmax(0, 1fr) clamp(24px, 2.5vw, 34px);
       align-items: center;
-      gap: clamp(4px, 0.45vw, 7px);
+      gap: clamp(4px, 0.45vw, 8px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
     .daily-row:last-child {
@@ -655,7 +645,7 @@
     }
 
     .daily-day {
-      font-size: clamp(9.5px, 1.3vh, 13.5px);
+      font-size: clamp(10px, 1.4vh, 15px);
       font-weight: 600;
       color: #ffffff;
       white-space: nowrap;
@@ -669,8 +659,8 @@
       gap: 3px;
     }
     .daily-icon {
-      width: clamp(15px, 2vh, 21px);
-      height: clamp(15px, 2vh, 21px);
+      width: clamp(17px, 2.25vh, 24px);
+      height: clamp(17px, 2.25vh, 24px);
       flex-shrink: 0;
     }
     .daily-icon svg {
@@ -678,19 +668,19 @@
       height: 100%;
     }
     .daily-pop {
-      font-size: clamp(8px, 1.02vh, 11px);
+      font-size: clamp(8.5px, 1.1vh, 12px);
       font-weight: 700;
       color: var(--cyan);
       text-shadow: var(--glow-cyan);
     }
 
     .daily-min {
-      font-size: clamp(9px, 1.25vh, 13px);
+      font-size: clamp(9.5px, 1.35vh, 14px);
       color: var(--text-dim);
       text-align: right;
     }
     .daily-max {
-      font-size: clamp(9.5px, 1.28vh, 13.5px);
+      font-size: clamp(10px, 1.38vh, 14.5px);
       font-weight: 600;
       color: #ffffff;
       text-align: left;
@@ -699,7 +689,7 @@
 
     .temp-bar-track {
       position: relative;
-      height: clamp(4px, 0.55vh, 6px);
+      height: clamp(4.5px, 0.6vh, 7px);
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.12);
     }
@@ -713,8 +703,8 @@
     .temp-bar-now {
       position: absolute;
       top: 50%;
-      width: clamp(6px, 0.85vh, 9px);
-      height: clamp(6px, 0.85vh, 9px);
+      width: clamp(6.5px, 0.9vh, 10px);
+      height: clamp(6.5px, 0.9vh, 10px);
       border-radius: 50%;
       background: #ffffff;
       transform: translate(-50%, -50%);
@@ -726,11 +716,13 @@
       display: grid;
       grid-template-columns: repeat(7, minmax(0, 1fr));
       text-align: center;
-      margin-bottom: clamp(2px, 0.4vh, 5px);
+      margin-bottom: clamp(4px, 0.55vh, 8px);
+      padding-bottom: clamp(3px, 0.4vh, 5px);
+      border-bottom: 1px solid var(--glass-divider);
       flex-shrink: 0;
     }
     .cal-wd {
-      font-size: clamp(8.5px, 1.1vh, 11.5px);
+      font-size: clamp(9px, 1.2vh, 12.5px);
       font-weight: 600;
       color: var(--text-dim);
     }
@@ -748,13 +740,13 @@
     }
 
     .cal-day {
-      width: clamp(19px, 2.55vh, 28px);
-      height: clamp(19px, 2.55vh, 28px);
+      width: clamp(21px, 2.85vh, 32px);
+      height: clamp(21px, 2.85vh, 32px);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: clamp(9px, 1.22vh, 13px);
+      font-size: clamp(9.5px, 1.35vh, 14.5px);
       font-weight: 500;
       color: rgba(255, 255, 255, 0.90);
     }
@@ -776,13 +768,13 @@
     }
 
     /* =====================================================================
-       8. LEFT ROW 4: SUNRISE/SUNSET & MOON PHASE
+       8. LEFT ROW 4: HEADERLESS SUNRISE/SUNSET & MOON PHASE
        ===================================================================== */
     .astro-card {
-      padding: clamp(7px, 0.95vh, 11px) clamp(10px, 1.1vw, 14px);
+      padding: clamp(8px, 1.05vh, 13px) clamp(10px, 1.1vw, 15px);
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: center;
       overflow: hidden;
     }
 
@@ -802,16 +794,16 @@
     }
     .sun-arc-svg {
       width: 100%;
-      max-width: 175px;
-      height: clamp(40px, 5.4vh, 62px);
+      max-width: 180px;
+      height: clamp(42px, 5.8vh, 66px);
       overflow: visible;
     }
     .sun-times-row {
       width: 100%;
-      max-width: 175px;
+      max-width: 180px;
       display: flex;
       justify-content: space-between;
-      font-size: clamp(9px, 1.15vh, 12px);
+      font-size: clamp(9px, 1.2vh, 12.5px);
       color: var(--text-soft);
       margin-top: 2px;
     }
@@ -825,22 +817,22 @@
       flex: 0.85;
       display: flex;
       flex-direction: column;
-      gap: clamp(3px, 0.45vh, 6px);
+      gap: clamp(4px, 0.55vh, 7px);
       min-width: 0;
     }
     .astro-stat {
       background: var(--glass-sub-bg);
       border: none;
       border-radius: 10px;
-      padding: clamp(3px, 0.45vh, 6px) clamp(7px, 0.7vw, 10px);
+      padding: clamp(4px, 0.5vh, 7px) clamp(7px, 0.75vw, 11px);
     }
     .astro-stat-label {
-      font-size: clamp(7.5px, 0.95vh, 10px);
+      font-size: clamp(7.5px, 0.98vh, 10.5px);
       color: var(--text-dim);
       line-height: 1.2;
     }
     .astro-stat-val {
-      font-size: clamp(10px, 1.3vh, 13.5px);
+      font-size: clamp(10px, 1.32vh, 14px);
       font-weight: 600;
       color: #ffffff;
       text-shadow: var(--glow-soft);
@@ -855,8 +847,8 @@
       gap: clamp(10px, 1.1vw, 16px);
     }
     .moon-svg-wrap {
-      width: clamp(46px, 6.2vh, 68px);
-      height: clamp(46px, 6.2vh, 68px);
+      width: clamp(50px, 6.8vh, 74px);
+      height: clamp(50px, 6.8vh, 74px);
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -872,16 +864,27 @@
       min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: clamp(3px, 0.4vh, 5px);
+      gap: clamp(4px, 0.5vh, 7px);
+    }
+    .moon-phase-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 6px;
     }
     .moon-phase-name {
-      font-size: clamp(11px, 1.45vh, 15px);
+      font-size: clamp(11.5px, 1.5vh, 16px);
       font-weight: 600;
       color: #ffffff;
       text-shadow: var(--glow-soft);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .moon-illum-sub {
+      font-size: clamp(9px, 1.15vh, 12px);
+      color: var(--text-dim);
+      white-space: nowrap;
     }
     .moon-stats-grid {
       display: grid;
@@ -890,33 +893,37 @@
     }
 
     /* =====================================================================
-       9. RIGHT ROW 1: MINIMAL DARK PRECIPITATION + VIVID HIMAWARI CLOUD MAP
+       9. RIGHT ROW 1: FULL-BLEED HEADERLESS PRECIPITATION & HIMAWARI MAP
        ===================================================================== */
     .map-card {
-      padding: clamp(8px, 1.05vh, 13px) clamp(10px, 1.1vw, 14px);
+      padding: 0;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    .map-controls {
+    .map-floating-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 650;
       display: flex;
       align-items: center;
       gap: clamp(4px, 0.4vw, 6px);
-      min-width: 0;
-      flex-shrink: 0;
     }
 
     .pill-btn {
       appearance: none;
       border: none;
       border-radius: var(--radius-pill);
-      background: var(--glass-sub-bg);
+      background: rgba(8, 18, 38, 0.66);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
       color: var(--text-soft);
       font-family: inherit;
       font-size: clamp(8px, 1.02vh, 11px);
       font-weight: 600;
-      padding: clamp(3px, 0.38vh, 5px) clamp(6px, 0.65vw, 10px);
+      padding: clamp(3.5px, 0.42vh, 5.5px) clamp(7px, 0.7vw, 11px);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -924,15 +931,16 @@
       transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
       white-space: nowrap;
       flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
     }
     .pill-btn:hover {
-      background: rgba(255, 255, 255, 0.16);
+      background: rgba(20, 38, 72, 0.84);
       color: #ffffff;
     }
     .pill-btn.is-active {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(26, 48, 88, 0.78);
       color: #ffffff;
-      box-shadow: 0 0 12px rgba(255, 255, 255, 0.22);
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.16), 0 2px 10px rgba(0, 0, 0, 0.35);
     }
 
     .status-dot {
@@ -943,16 +951,12 @@
       box-shadow: 0 0 8px #4ade80;
       flex-shrink: 0;
     }
-    .status-dot.forecast {
-      background: var(--cyan);
-      box-shadow: 0 0 8px var(--cyan);
-    }
 
     .map-stage {
       position: relative;
       flex: 1;
       min-height: 0;
-      border-radius: 13px;
+      border-radius: var(--radius-card);
       overflow: hidden;
       background: #081326;
       border: none;
@@ -966,7 +970,6 @@
       background: #081326;
     }
 
-    /* Dark navy base map styling & vivid Himawari screen-blended clouds */
     .leaflet-basePane-pane {
       filter: sepia(0.35) hue-rotate(185deg) saturate(1.85) brightness(1.24) contrast(1.16);
     }
@@ -985,7 +988,6 @@
       transition: opacity 0.4s ease;
     }
 
-    /* Custom Map Markers */
     .user-loc-marker {
       position: relative;
       width: 14px;
@@ -1026,29 +1028,6 @@
       text-shadow: 0 1px 8px rgba(0, 6, 20, 0.98), 0 0 10px rgba(100, 210, 255, 0.7);
     }
 
-    /* Map Overlays (Borderless glass pills) */
-    .map-time-pill {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 650;
-      border: none;
-      border-radius: var(--radius-pill);
-      background: rgba(8, 18, 38, 0.72);
-      -webkit-backdrop-filter: blur(14px);
-      backdrop-filter: blur(14px);
-      box-shadow: 0 0 18px rgba(255, 255, 255, 0.12), 0 4px 14px rgba(0, 0, 0, 0.45);
-      padding: 5px 12px;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      font-size: clamp(10px, 1.3vh, 13px);
-      font-weight: 700;
-      color: #ffffff;
-      text-shadow: var(--glow-soft);
-      pointer-events: none;
-    }
-
     .map-timeline-bar {
       position: absolute;
       left: 10px;
@@ -1066,6 +1045,19 @@
       align-items: center;
       gap: 10px;
       pointer-events: none;
+    }
+
+    .tl-cur {
+      font-size: clamp(9.5px, 1.2vh, 12.5px);
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+      white-space: nowrap;
+      min-width: 3.4em;
+    }
+    .tl-cur.is-forecast {
+      color: var(--cyan);
+      text-shadow: var(--glow-cyan);
     }
 
     .tl-time {
@@ -1122,7 +1114,7 @@
     }
 
     /* =====================================================================
-       10. RIGHT ROW 2: ISS TRACKER & REALTIME EARTHQUAKE MONITOR
+       10. RIGHT ROW 2: ISS TRACKER (NATURAL EARTH MAP) & EARTHQUAKE MONITOR
        ===================================================================== */
     .iss-card,
     .quake-card {
@@ -1328,7 +1320,6 @@
       padding: 0 4px;
     }
 
-    /* Shindo Scale Colors */
     .shindo-1 { background: rgba(59, 130, 246, 0.55); }
     .shindo-2 { background: rgba(14, 165, 233, 0.65); }
     .shindo-3 { background: rgba(34, 197, 94, 0.65); }
@@ -1353,7 +1344,7 @@
   <main class="dashboard">
     <!-- ==================== LEFT COLUMN ==================== -->
     <section class="left-col">
-      <!-- Row 1: Floating Hero Clock & Weather -->
+      <!-- Row 1: Compact Clock & Prominent Current Weather -->
       <header class="hero-block">
         <div class="hero-clock-wrap">
           <div class="hero-time-row">
@@ -1368,7 +1359,7 @@
         <div class="hero-weather-wrap">
           <div class="hero-weather-info">
             <div class="hero-loc-row">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/>
               </svg>
               <span id="loc-name">横浜</span>
@@ -1383,46 +1374,25 @@
         </div>
       </header>
 
-      <!-- Row 2: Expanded Hourly Forecast + Sparkline -->
+      <!-- Row 2: Compact 12-Hour Forecast + Sparkline (No Title) -->
       <article class="glass-card hourly-card">
-        <div class="hourly-summary" id="hourly-summary">天気データを取得しています...</div>
         <div class="hourly-body">
           <div class="hourly-top-grid" id="hourly-top"></div>
           <div class="hourly-spark-wrap">
-            <svg class="hourly-spark-svg" id="hourly-spark-svg" viewBox="0 0 900 100" preserveAspectRatio="none"></svg>
+            <svg class="hourly-spark-svg" id="hourly-spark-svg" viewBox="0 0 1200 100" preserveAspectRatio="none"></svg>
             <div class="hourly-spark-dots" id="hourly-spark-dots"></div>
           </div>
           <div class="hourly-temp-grid" id="hourly-temps"></div>
         </div>
       </article>
 
-      <!-- Row 3: Compact 7-Day Forecast & Monthly Calendar -->
+      <!-- Row 3: Headerless 7-Day Forecast & Monthly Calendar -->
       <div class="split-row">
         <article class="glass-card daily-card">
-          <div class="card-header">
-            <div class="card-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              7日間の予報
-            </div>
-            <span class="card-meta" id="weather-updated">--:-- 更新</span>
-          </div>
           <div class="daily-list" id="daily-list"></div>
         </article>
 
         <article class="glass-card calendar-card">
-          <div class="card-header">
-            <div class="card-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="3"/><line x1="3" y1="10" x2="21" y2="10"/>
-                <circle cx="12" cy="15" r="1.5" fill="currentColor"/>
-              </svg>
-              カレンダー
-            </div>
-            <span class="card-meta" id="cal-ym">----年 --月</span>
-          </div>
           <div class="cal-weekdays">
             <span class="cal-wd sun">日</span><span class="cal-wd">月</span><span class="cal-wd">火</span>
             <span class="cal-wd">水</span><span class="cal-wd">木</span><span class="cal-wd">金</span>
@@ -1432,18 +1402,9 @@
         </article>
       </div>
 
-      <!-- Row 4: Sunrise/Sunset & Moon Phase -->
+      <!-- Row 4: Headerless Sunrise/Sunset & Moon Phase -->
       <div class="astro-row">
         <article class="glass-card astro-card">
-          <div class="card-header">
-            <div class="card-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 3v3M4.2 10.2l2.1 2.1M19.8 10.2l-2.1 2.1M2 18h20M7 18a5 5 0 0 1 10 0"/>
-              </svg>
-              日の出・日の入り
-            </div>
-            <span class="card-meta" id="daylight-len">日照 --時間--分</span>
-          </div>
           <div class="sun-content">
             <div class="sun-arc-wrap">
               <svg class="sun-arc-svg" id="sun-arc-svg" viewBox="0 0 200 72"></svg>
@@ -1458,27 +1419,21 @@
                 <div class="astro-stat-val" id="sun-next-val">--時間--分</div>
               </div>
               <div class="astro-stat">
-                <div class="astro-stat-label">太陽の状態</div>
-                <div class="astro-stat-val" id="sun-state">--</div>
+                <div class="astro-stat-label">日照時間</div>
+                <div class="astro-stat-val" id="sun-daylight-val">--時間--分</div>
               </div>
             </div>
           </div>
         </article>
 
         <article class="glass-card astro-card">
-          <div class="card-header">
-            <div class="card-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-              </svg>
-              月の満ち欠け
-            </div>
-            <span class="card-meta" id="moon-illum">輝面率 --%</span>
-          </div>
           <div class="moon-content">
             <div class="moon-svg-wrap" id="moon-svg-wrap"></div>
             <div class="moon-info">
-              <div class="moon-phase-name" id="moon-name">--</div>
+              <div class="moon-phase-row">
+                <span class="moon-phase-name" id="moon-name">--</span>
+                <span class="moon-illum-sub" id="moon-illum">輝面率 --%</span>
+              </div>
               <div class="moon-stats-grid">
                 <div class="astro-stat">
                   <div class="astro-stat-label">月齢</div>
@@ -1497,33 +1452,17 @@
 
     <!-- ==================== RIGHT COLUMN ==================== -->
     <section class="right-col">
-      <!-- Row 1: Minimal Dark Precipitation & Vivid Himawari Cloud Map -->
+      <!-- Row 1: Full-Bleed Headerless Precipitation & Himawari Cloud Map -->
       <article class="glass-card map-card">
-        <div class="card-header">
-          <div class="card-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-            </svg>
-            降水マップ
-          </div>
-          <div class="map-controls">
-            <span class="pill-btn" style="cursor:default;">
-              <span class="status-dot" id="radar-source-dot"></span>
-              <span id="radar-source-label">気象庁</span>
-            </span>
+        <div class="map-stage">
+          <div id="radar-map"></div>
+          <div class="map-floating-controls">
             <button type="button" class="pill-btn is-active" id="cloud-toggle-btn">雲: ON</button>
             <button type="button" class="pill-btn is-active" id="dim-toggle-btn">減光: 自動</button>
             <button type="button" class="pill-btn" id="theme-toggle-btn">背景: 自動</button>
           </div>
-        </div>
-        <div class="map-stage">
-          <div id="radar-map"></div>
-          <div class="map-time-pill">
-            <span class="status-dot" id="radar-pill-dot"></span>
-            <span id="radar-pill-text">読込中...</span>
-          </div>
           <div class="map-timeline-bar">
-            <span class="tl-time" id="tl-start">--:--</span>
+            <span class="tl-cur" id="tl-cur">--:--</span>
             <div class="tl-track">
               <div class="tl-fill" id="tl-fill"></div>
               <div class="tl-playhead" id="tl-playhead"></div>
@@ -1546,15 +1485,25 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(-24 12 12)"/>
               </svg>
-              ISS 現在位置
+              ISS
             </div>
-            <span class="pill-btn" style="cursor:default; padding:2px 8px;">
+            <span class="pill-btn" style="cursor:default; padding:2px 8px; box-shadow:none; background:var(--glass-sub-bg);">
               <span class="status-dot"></span>
               <span>LIVE</span>
             </span>
           </div>
           <div class="iss-map-wrap">
-            <svg class="iss-svg" id="iss-svg" viewBox="0 0 360 180" preserveAspectRatio="xMidYMid meet"></svg>
+            <svg class="iss-svg" id="iss-svg" viewBox="0 0 360 180" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <filter id="issGlow" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="2.8" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <g id="iss-graticule-layer"></g>
+              <g id="iss-world-layer"></g>
+              <g id="iss-dynamic-layer"></g>
+            </svg>
             <div class="iss-region-badge" id="iss-region">軌道計算中...</div>
           </div>
           <div class="iss-stats-grid">
@@ -1579,13 +1528,12 @@
 
         <article class="glass-card quake-card" id="quake-card">
           <div class="card-header">
-            <div class="card-title">
+            <div class="card-title" aria-label="地震モニタ">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="2 12 6 12 9 4 13 20 16 10 18 12 22 12"/>
               </svg>
-              地震モニタ
             </div>
-            <span class="pill-btn" style="cursor:default; padding:2px 8px;">
+            <span class="pill-btn" style="cursor:default; padding:2px 8px; box-shadow:none; background:var(--glass-sub-bg);">
               <span class="status-dot"></span>
               <span>P2P監視中</span>
             </span>
@@ -1623,27 +1571,26 @@
         lat: 35.4437,
         lon: 139.6380,
         radarZoom: 7,
+        hourlyCount: 12,
         weatherIntervalMs: 15 * 60 * 1000,
         radarIntervalMs: 10 * 60 * 1000,
         issIntervalMs: 10 * 1000,
         quakeIntervalMs: 60 * 1000,
         loopStepMs: 850,
         loopHoldEndMs: 2200,
-        /* Vivid Himawari-9 cloud opacity */
         cloudOpacityLive: 0.78,
         cloudOpacityForecast: 0.54,
         radarOpacity: 0.88,
-        /* Late-night automatic dimming schedule (0:00 - 6:00 JST) */
         nightDimStartHour: 0,
         nightDimEndHour: 6,
-        quakeWakeMinScale: 30,       // Shindo 3+ wakes quake card during night dim
-        quakeWakeDurationMin: 15     // Keep awake for 15 minutes after quake
+        quakeWakeMinScale: 30,
+        quakeWakeDurationMin: 15
       };
 
       const STATE = {
         themeOverride: 'auto',
         activeTheme: 'clear-night',
-        nightDimMode: 'auto',        // 'auto' | 'on' | 'off'
+        nightDimMode: 'auto',
         isNightDimActive: false,
         weatherCode: 0,
         sunriseDate: null,
@@ -1751,7 +1698,6 @@
           add(23, '勤労感謝の日');
         }
 
-        // Substitute holidays (振替休日)
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         Object.keys(map).map(Number).sort((a, b) => a - b).forEach((d) => {
           if (new Date(year, month, d).getDay() === 0) {
@@ -1771,7 +1717,6 @@
         if (STATE.lastCalDayKey === key) return;
         STATE.lastCalDayKey = key;
 
-        document.getElementById('cal-ym').textContent = `${y}年 ${m + 1}月`;
         const grid = document.getElementById('cal-grid');
         const firstDow = new Date(y, m, 1).getDay();
         const daysInMonth = new Date(y, m + 1, 0).getDate();
@@ -1847,30 +1792,25 @@
         document.getElementById('sunset-time').textContent = `${pad2(ss.getHours())}:${pad2(ss.getMinutes())}`;
 
         const dayMins = Math.max(0, Math.round((ss - sr) / 60000));
-        document.getElementById('daylight-len').textContent =
-          `日照 ${Math.floor(dayMins / 60)}時間${pad2(dayMins % 60)}分`;
+        document.getElementById('sun-daylight-val').textContent =
+          `${Math.floor(dayMins / 60)}時間${pad2(dayMins % 60)}分`;
 
         const isDay = now >= sr && now <= ss;
-        let nextLabel, diffMins, stateText;
+        let nextLabel, diffMins;
         if (now < sr) {
           nextLabel = '日の出まで';
           diffMins = Math.max(1, Math.round((sr - now) / 60000));
-          stateText = '夜明け前';
         } else if (now <= ss) {
           nextLabel = '日の入りまで';
           diffMins = Math.max(1, Math.round((ss - now) / 60000));
-          const ratio = (now - sr) / (ss - sr);
-          stateText = ratio < 0.15 ? '朝' : ratio > 0.85 ? '夕暮れ' : '日中';
         } else {
           const tomorrowSr = new Date(sr.getTime() + 86400000);
           nextLabel = '次の日の出まで';
           diffMins = Math.max(1, Math.round((tomorrowSr - now) / 60000));
-          stateText = '夜間';
         }
         document.getElementById('sun-next-label').textContent = nextLabel;
         document.getElementById('sun-next-val').textContent =
           `${Math.floor(diffMins / 60)}時間${pad2(diffMins % 60)}分`;
-        document.getElementById('sun-state').textContent = stateText;
 
         const horizonY = 48;
         const startX = 16, endX = 184, peakY = 10, troughY = 66;
@@ -1981,7 +1921,7 @@
       }
 
       /* ===================================================================
-         3. WEATHER ICONS & OPEN-METEO FETCH + SPARKLINE
+         3. WEATHER ICONS & OPEN-METEO FETCH + 12-HOUR SPARKLINE
          =================================================================== */
       function wmoToInfo(code, isNight) {
         if (code === 0) return { label: '快晴', type: isNight ? 'clear-night' : 'clear-day' };
@@ -2094,15 +2034,14 @@
         document.getElementById('cur-hilo').textContent = `最高 ${todayMax}°  最低 ${todayMin}°`;
         document.getElementById('cur-sub').textContent =
           `体感 ${curApparent}° ・ 湿度 ${curHum}% ・ 風速 ${curWind}m/s`;
-        document.getElementById('weather-updated').textContent =
-          `${pad2(now.getHours())}:${pad2(now.getMinutes())} 更新`;
 
         const nowHourKey = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}T${pad2(now.getHours())}:00`;
         let startIdx = data.hourly.time.findIndex((t) => t >= nowHourKey);
         if (startIdx < 0) startIdx = 0;
 
+        const count = CONFIG.hourlyCount;
         const hours = [];
-        for (let i = 0; i < 9; i++) {
+        for (let i = 0; i < count; i++) {
           const idx = Math.min(data.hourly.time.length - 1, startIdx + i);
           const dt = new Date(data.hourly.time[idx]);
           const code = data.hourly.weather_code[idx];
@@ -2115,18 +2054,6 @@
             info: wmoToInfo(code, isNight)
           });
         }
-
-        const maxPop = Math.max(...hours.map((h) => h.pop));
-        const rainHr = hours.find((h) => h.pop >= 40 || ['rain', 'storm'].includes(h.info.type));
-        const snowHr = hours.find((h) => h.info.type === 'snow');
-        const minH = Math.min(...hours.map((h) => h.temp));
-        const maxH = Math.max(...hours.map((h) => h.temp));
-        let summary = '';
-        if (snowHr) summary = `${snowHr.label}頃に雪の可能性があります。気温は${minH}°〜${maxH}°で推移します。`;
-        else if (rainHr) summary = `${rainHr.label}頃に雨の見込み（降水確率最大${maxPop}%）。傘の準備があると安心です。`;
-        else if (cond.type === 'cloudy') summary = `しばらく雲の多い空模様が続く見込みです。気温は${minH}°〜${maxH}°で推移します。`;
-        else summary = `おおむね穏やかな空模様が続く見込みです。この先の気温は${minH}°〜${maxH}°の予想です。`;
-        document.getElementById('hourly-summary').textContent = summary;
 
         document.getElementById('hourly-top').innerHTML = hours.map((h) => `
           <div class="hourly-top-cell">
@@ -2144,9 +2071,9 @@
         const tMax = Math.max(...hours.map((h) => h.temp));
         const span = Math.max(2, tMax - tMin);
         const pts = hours.map((h, i) => {
-          const xPct = ((i + 0.5) / 9) * 100;
+          const xPct = ((i + 0.5) / count) * 100;
           const yPct = 80 - ((h.temp - tMin) / span) * 60;
-          return { x: xPct * 9, y: yPct, xPct, yPct, isNow: h.isNow };
+          return { x: xPct * 12, y: yPct, xPct, yPct, isNow: h.isNow };
         });
 
         const lineD = buildMonotonePath(pts);
@@ -2158,12 +2085,12 @@
               <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
             </linearGradient>
             <filter id="sparkGlow" x="-20%" y="-40%" width="140%" height="180%">
-              <feGaussianBlur stdDeviation="2.8" result="b"/>
+              <feGaussianBlur stdDeviation="2.6" result="b"/>
               <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
           </defs>
           <path d="${areaD}" fill="url(#sparkArea)"/>
-          <path d="${lineD}" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2.4" vector-effect="non-scaling-stroke" filter="url(#sparkGlow)"/>
+          <path d="${lineD}" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2.1" vector-effect="non-scaling-stroke" filter="url(#sparkGlow)"/>
         `;
 
         document.getElementById('hourly-spark-dots').innerHTML = pts.map((p) =>
@@ -2378,7 +2305,7 @@
       }
 
       /* ===================================================================
-         5. PRECIPITATION RADAR (JMA NOWCAST / RAINVIEWER) + VIVID HIMAWARI CLOUDS
+         5. PRECIPITATION RADAR (JMA NOWCAST / RAINVIEWER) + HIMAWARI CLOUDS
          =================================================================== */
       const RADAR = {
         map: null,
@@ -2402,10 +2329,7 @@
       }
 
       function initMap() {
-        if (typeof L === 'undefined') {
-          document.getElementById('radar-pill-text').textContent = '地図ライブラリ読込待機中';
-          return;
-        }
+        if (typeof L === 'undefined') return;
 
         const map = L.map('radar-map', {
           center: [CONFIG.lat, CONFIG.lon],
@@ -2604,20 +2528,17 @@
       async function loadRadarFrames() {
         if (!RADAR.map) return;
 
-        const replaceFrames = (newFrames, sourceLabel) => {
+        const replaceFrames = (newFrames) => {
           RADAR.frames.forEach((f) => {
             if (f.layer && RADAR.map.hasLayer(f.layer)) RADAR.map.removeLayer(f.layer);
           });
           RADAR.frames = newFrames;
           RADAR.activeIdx = -1;
           RADAR.loopStartMs = performance.now();
-          document.getElementById('radar-source-label').textContent = sourceLabel;
 
           if (newFrames.length) {
-            document.getElementById('tl-start').textContent = formatJstHm(newFrames[0].ts);
             const last = newFrames[newFrames.length - 1];
-            document.getElementById('tl-end').textContent =
-              (last.isForecast ? '予測 ' : '') + formatJstHm(last.ts);
+            document.getElementById('tl-end').textContent = formatJstHm(last.ts);
             setRadarFrame(0);
           }
         };
@@ -2655,12 +2576,12 @@
             return {
               ts: f.ts,
               isForecast: f.isForecast,
-              label: `${f.isForecast ? '予測' : '実況'} ${formatJstHm(f.ts)}`,
+              timeStr: formatJstHm(f.ts),
               layer
             };
           });
 
-          replaceFrames(layers, '気象庁');
+          replaceFrames(layers);
           return;
         } catch (err) {
           console.warn('JMA Nowcast fallback to RainViewer:', err);
@@ -2686,14 +2607,13 @@
             return {
               ts,
               isForecast: f.isForecast,
-              label: `${f.isForecast ? '予測' : '実況'} ${formatJstHm(ts)}`,
+              timeStr: formatJstHm(ts),
               layer
             };
           });
-          replaceFrames(layers, 'RainViewer');
+          replaceFrames(layers);
         } catch (err2) {
           console.warn('RainViewer failed:', err2);
-          document.getElementById('radar-pill-text').textContent = 'データ待機中';
         }
       }
 
@@ -2702,9 +2622,9 @@
         RADAR.activeIdx = idx;
         RADAR.frames.forEach((f, i) => f.layer.setOpacity(i === idx ? CONFIG.radarOpacity : 0));
         const cur = RADAR.frames[idx];
-        document.getElementById('radar-pill-text').textContent = cur.label;
-        const dot = document.getElementById('radar-pill-dot');
-        dot.classList.toggle('forecast', cur.isForecast);
+        const curEl = document.getElementById('tl-cur');
+        curEl.textContent = cur.timeStr;
+        curEl.classList.toggle('is-forecast', cur.isForecast);
         syncCloudVisibility();
       }
 
@@ -2735,7 +2655,7 @@
       }
 
       /* ===================================================================
-         6. ISS REAL-TIME TRACKER (CUSTOM SVG WORLD MAP + CONTINUOUS MOTION)
+         6. ISS REAL-TIME TRACKER (NATURAL EARTH 1:110M VECTOR WORLD MAP)
          =================================================================== */
       const ISS = {
         lat: 32.5,
@@ -2747,7 +2667,7 @@
         lastSyncMs: Date.now()
       };
 
-      const WORLD_PATHS = [
+      const FALLBACK_WORLD_PATHS = [
         'M 22 30 L 42 22 L 70 22 L 98 30 L 116 42 L 106 58 L 92 66 L 84 82 L 76 88 L 66 78 L 54 68 L 44 54 L 30 44 Z',
         'M 122 14 L 148 12 L 154 26 L 140 36 L 126 30 Z',
         'M 94 94 L 114 96 L 130 112 L 126 132 L 112 152 L 102 162 L 96 146 L 94 122 L 88 106 Z',
@@ -2758,6 +2678,124 @@
         'M 278 96 L 296 98 L 308 104 L 288 106 Z',
         'M 294 114 L 322 112 L 334 128 L 324 144 L 302 142 L 292 128 Z'
       ];
+
+      function projLon(lon) { return lon + 180; }
+      function projLat(lat) { return 90 - lat; }
+
+      function initIssStaticLayers() {
+        const grat = document.getElementById('iss-graticule-layer');
+        let gHtml = '';
+        // Latitude lines (-60, -30, 0, 30, 60)
+        [-60, -30, 0, 30, 60].forEach((lat) => {
+          const y = projLat(lat);
+          const op = lat === 0 ? 0.11 : 0.055;
+          gHtml += `<line x1="0" y1="${y}" x2="360" y2="${y}" stroke="rgba(255,255,255,${op})" stroke-width="0.6" stroke-dasharray="${lat === 0 ? '3 4' : '2 4'}"/>`;
+        });
+        // Longitude lines (-120, -60, 0, 60, 120)
+        [-120, -60, 0, 60, 120].forEach((lon) => {
+          const x = projLon(lon);
+          const op = lon === 0 ? 0.09 : 0.05;
+          gHtml += `<line x1="${x}" y1="0" x2="${x}" y2="180" stroke="rgba(255,255,255,${op})" stroke-width="0.6" stroke-dasharray="2 4"/>`;
+        });
+        grat.innerHTML = gHtml;
+
+        // Instant fallback world silhouette before Natural Earth vector resolves
+        const worldEl = document.getElementById('iss-world-layer');
+        worldEl.innerHTML = FALLBACK_WORLD_PATHS.map((d) =>
+          `<path d="${d}" fill="rgba(135, 175, 225, 0.28)" stroke="rgba(175, 215, 255, 0.22)" stroke-width="0.35"/>`
+        ).join('');
+      }
+
+      /* Pure-JS TopoJSON decoder for Natural Earth world-atlas@2/land-110m.json */
+      function topojsonLandToSvgPath(topo) {
+        const sx = topo.transform ? topo.transform.scale[0] : 1;
+        const sy = topo.transform ? topo.transform.scale[1] : 1;
+        const tx = topo.transform ? topo.transform.translate[0] : 0;
+        const ty = topo.transform ? topo.transform.translate[1] : 0;
+
+        const decodedArcs = topo.arcs.map((arc) => {
+          let x = 0, y = 0;
+          return arc.map((pt) => {
+            x += pt[0];
+            y += pt[1];
+            return [x * sx + tx, y * sy + ty];
+          });
+        });
+
+        function stitchRing(arcIndices) {
+          const coords = [];
+          for (let i = 0; i < arcIndices.length; i++) {
+            const idx = arcIndices[i];
+            const raw = idx < 0 ? decodedArcs[~idx].slice().reverse() : decodedArcs[idx];
+            const start = i === 0 ? 0 : 1;
+            for (let j = start; j < raw.length; j++) {
+              coords.push(raw[j]);
+            }
+          }
+          return coords;
+        }
+
+        function ringToPath(coords) {
+          if (coords.length < 3) return '';
+          let d = '';
+          let prevLon = null;
+          for (let i = 0; i < coords.length; i++) {
+            const lon = coords[i][0];
+            const lat = coords[i][1];
+            const px = projLon(lon).toFixed(2);
+            const py = projLat(lat).toFixed(2);
+            if (i === 0 || (prevLon !== null && Math.abs(lon - prevLon) > 180)) {
+              d += `M${px} ${py}`;
+            } else {
+              d += `L${px} ${py}`;
+            }
+            prevLon = lon;
+          }
+          return d + 'Z';
+        }
+
+        const paths = [];
+        function collectGeom(g) {
+          if (!g) return;
+          if (g.type === 'GeometryCollection') {
+            g.geometries.forEach(collectGeom);
+          } else if (g.type === 'Polygon') {
+            g.arcs.forEach((ring) => {
+              const p = ringToPath(stitchRing(ring));
+              if (p) paths.push(p);
+            });
+          } else if (g.type === 'MultiPolygon') {
+            g.arcs.forEach((poly) => {
+              poly.forEach((ring) => {
+                const p = ringToPath(stitchRing(ring));
+                if (p) paths.push(p);
+              });
+            });
+          }
+        }
+        collectGeom(topo.objects.land);
+        return paths.join(' ');
+      }
+
+      async function loadRealisticWorldMap() {
+        const urls = [
+          'https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json',
+          'https://unpkg.com/world-atlas@2/land-110m.json'
+        ];
+        for (const url of urls) {
+          try {
+            const topo = await fetchJson(url, 10000);
+            const combinedPath = topojsonLandToSvgPath(topo);
+            if (combinedPath) {
+              document.getElementById('iss-world-layer').innerHTML =
+                `<path d="${combinedPath}" fill="rgba(135, 175, 225, 0.28)" stroke="rgba(180, 215, 255, 0.26)" stroke-width="0.35" stroke-linejoin="round"/>`;
+              return;
+            }
+          } catch (err) {
+            console.warn('World atlas load attempt failed:', url, err);
+          }
+        }
+      }
 
       function haversineKm(lat1, lon1, lat2, lon2) {
         const R = 6371;
@@ -2782,11 +2820,8 @@
         return 'インド洋上空';
       }
 
-      function projLon(lon) { return ((lon + 180) / 360) * 360; }
-      function projLat(lat) { return ((90 - lat) / 180) * 180; }
-
-      function renderIssMap() {
-        const svg = document.getElementById('iss-svg');
+      function renderIssDynamic() {
+        const dyn = document.getElementById('iss-dynamic-layer');
         const ix = projLon(ISS.lon);
         const iy = projLat(ISS.lat);
         const yx = projLon(CONFIG.lon);
@@ -2819,30 +2854,17 @@
         if (curSeg.length > 1) segments.push(curSeg);
 
         const orbitLines = segments.map((pts) =>
-          `<polyline points="${pts.join(' ')}" fill="none" stroke="rgba(255,255,255,0.48)" stroke-width="1.2" stroke-dasharray="3 3"/>`
+          `<polyline points="${pts.join(' ')}" fill="none" stroke="rgba(255,255,255,0.52)" stroke-width="1.15" stroke-dasharray="3 3"/>`
         ).join('');
 
-        const landPaths = WORLD_PATHS.map((d) =>
-          `<path d="${d}" fill="rgba(135, 175, 225, 0.28)"/>`
-        ).join('');
-
-        svg.innerHTML = `
-          <defs>
-            <filter id="issGlow" x="-80%" y="-80%" width="260%" height="260%">
-              <feGaussianBlur stdDeviation="3" result="b"/>
-              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <line x1="0" y1="90" x2="360" y2="90" stroke="rgba(255,255,255,0.08)" stroke-width="0.7" stroke-dasharray="2 4"/>
-          <line x1="180" y1="0" x2="180" y2="180" stroke="rgba(255,255,255,0.06)" stroke-width="0.7" stroke-dasharray="2 4"/>
-          ${landPaths}
+        dyn.innerHTML = `
           ${orbitLines}
-          <circle cx="${yx.toFixed(1)}" cy="${yy.toFixed(1)}" r="2.6" fill="#64D2FF" opacity="0.9"/>
+          <circle cx="${yx.toFixed(1)}" cy="${yy.toFixed(1)}" r="2.5" fill="#64D2FF" opacity="0.95"/>
           <circle cx="${ix.toFixed(1)}" cy="${iy.toFixed(1)}" r="9" fill="rgba(255,255,255,0.16)">
             <animate attributeName="r" values="5;12;5" dur="2.2s" repeatCount="indefinite"/>
             <animate attributeName="opacity" values="0.45;0.05;0.45" dur="2.2s" repeatCount="indefinite"/>
           </circle>
-          <circle cx="${ix.toFixed(1)}" cy="${iy.toFixed(1)}" r="3.6" fill="#ffffff" filter="url(#issGlow)"/>
+          <circle cx="${ix.toFixed(1)}" cy="${iy.toFixed(1)}" r="3.4" fill="#ffffff" filter="url(#issGlow)"/>
         `;
 
         const latStr = `${Math.abs(ISS.lat).toFixed(1)}°${ISS.lat >= 0 ? 'N' : 'S'}`;
@@ -2875,7 +2897,7 @@
           ISS.alt = d.altitude;
           ISS.vel = d.velocity;
           ISS.lastSyncMs = now;
-          renderIssMap();
+          renderIssDynamic();
         } catch (err) {
           console.warn('ISS API offline, using orbital propagation:', err);
         }
@@ -2888,7 +2910,7 @@
         ISS.lon += ISS.dLonPerSec;
         if (ISS.lon > 180) ISS.lon -= 360;
         if (ISS.lon < -180) ISS.lon += 360;
-        renderIssMap();
+        renderIssDynamic();
       }
 
       /* ===================================================================
@@ -2925,7 +2947,6 @@
 
       function parseP2pTimeMs(str) {
         if (!str) return 0;
-        // "2026/11/19 18:12:00" (JST)
         const iso = str.replace(/\//g, '-').replace(' ', 'T') + '+09:00';
         const t = Date.parse(iso);
         return Number.isNaN(t) ? 0 : t;
@@ -2941,7 +2962,6 @@
         const mag = hypo.magnitude != null && hypo.magnitude >= 0 ? `M${Number(hypo.magnitude).toFixed(1)}` : 'M--';
         const depth = hypo.depth != null && hypo.depth >= 0 ? (hypo.depth === 0 ? 'ごく浅い' : `深さ ${hypo.depth}km`) : '深さ不明';
 
-        // Wake up earthquake card during night dim if Shindo 3+ occurred recently
         const quakeCard = document.getElementById('quake-card');
         const eqTimeMs = parseP2pTimeMs(eq.time);
         const isRecentStrong = (eq.maxScale >= CONFIG.quakeWakeMinScale) &&
@@ -3043,7 +3063,9 @@
         } catch (e) { console.error(e); }
 
         try {
-          renderIssMap();
+          initIssStaticLayers();
+          renderIssDynamic();
+          loadRealisticWorldMap();
           fetchIss();
           setInterval(fetchIss, CONFIG.issIntervalMs);
           setInterval(stepIssInterpolation, 1000);
