@@ -127,12 +127,17 @@
       padding: 0;
     }
 
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
     html, body {
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
-                   "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      font-family: "Inter", "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont,
+                   "Roboto", "Hiragino Sans", "Noto Sans CJK JP", "Noto Sans JP", sans-serif;
       color: var(--text-main);
       background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 52%, var(--sky-bot) 100%);
       -webkit-font-smoothing: antialiased;
@@ -261,6 +266,12 @@
         0 10px 26px rgba(0, 0, 0, 0.55);
     }
 
+    /* Fire TV Stick (Silk Browser) GPU optimization for smooth 24/7 playback */
+    html.is-firetv .glass-card {
+      -webkit-backdrop-filter: blur(10px) saturate(145%);
+      backdrop-filter: blur(10px) saturate(145%);
+    }
+
     /* =====================================================================
        3. MAIN GRID LAYOUT
        ===================================================================== */
@@ -280,9 +291,9 @@
       min-width: 0;
       min-height: 0;
       display: grid;
-      /* Row 1 (Current Weather & Clock) expanded into freed space; Row 2 compact; Row 3 kept at original height */
+      /* Row 1: centered current weather + 1-line status bar; Row 2: compact 12h; Row 3: preserved 7-day & cal */
       grid-template-rows: minmax(0, 0.94fr) minmax(0, 0.54fr) minmax(0, 0.98fr) auto;
-      gap: clamp(11px, 1.35vh, 18px);
+      gap: clamp(10px, 1.2vh, 16px);
     }
 
     .right-col {
@@ -363,97 +374,55 @@
     }
 
     /* =====================================================================
-       5. LEFT ROW 1: EXPANDED HERO CURRENT WEATHER & COMPACT CLOCK
+       5. LEFT ROW 1: CENTERED HERO CURRENT WEATHER + COMPACT 1-LINE TIME/DATE/DIM
        ===================================================================== */
     .hero-block {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      gap: clamp(12px, 1.4vw, 22px);
-      padding: clamp(4px, 0.8vh, 12px) clamp(6px, 0.7vw, 12px);
+      padding: clamp(2px, 0.4vh, 6px) clamp(6px, 0.7vw, 12px) 0;
       min-width: 0;
       min-height: 0;
       transition: opacity 1.4s ease, filter 1.4s ease;
     }
 
-    .hero-clock-wrap {
+    /* Current Weather centered horizontally & vertically */
+    .hero-weather-center {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
       display: flex;
-      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      min-width: 0;
-      flex-shrink: 0;
     }
 
-    .hero-time-row {
-      display: flex;
-      align-items: baseline;
-      gap: clamp(3px, 0.35vw, 6px);
-      line-height: 0.95;
-    }
-
-    /* Compact, understated clock */
-    .hero-time {
-      font-size: clamp(24px, 4.2vh, 48px);
-      font-weight: 200;
-      letter-spacing: -0.02em;
-      color: #ffffff;
-      text-shadow: var(--glow-hero);
-    }
-
-    .hero-sec {
-      font-size: clamp(10.5px, 1.65vh, 18px);
-      font-weight: 300;
-      color: rgba(255, 255, 255, 0.65);
-      text-shadow: var(--glow-soft);
-    }
-
-    .hero-date-row {
-      margin-top: clamp(4px, 0.6vh, 8px);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .hero-date {
-      font-size: clamp(9.5px, 1.3vh, 14px);
-      font-weight: 500;
-      color: var(--text-soft);
-      text-shadow: var(--glow-soft);
-      white-space: nowrap;
-    }
-
-    .night-dim-badge {
-      display: none;
-      align-items: center;
-      gap: 4px;
-      border-radius: var(--radius-pill);
-      background: rgba(255, 232, 195, 0.14);
-      color: rgba(255, 236, 206, 0.92);
-      padding: 2px 7px;
-      font-size: clamp(7.5px, 0.95vh, 10.5px);
-      font-weight: 600;
-      letter-spacing: 0.03em;
-      white-space: nowrap;
-    }
-    body[data-night-dim="on"] .night-dim-badge {
-      display: inline-flex;
-    }
-
-    /* Spacious, prominent current weather readout */
     .hero-weather-wrap {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
-      gap: clamp(12px, 1.4vw, 24px);
+      justify-content: center;
+      gap: clamp(16px, 2vw, 32px);
       min-width: 0;
+    }
+
+    /* Use sans-serif-thin / Roboto Light on Fire OS so large temperature stays sleek like Mac */
+    .hero-temp {
+      font-family: "Inter", "SF Pro Display", "sans-serif-thin", "sans-serif-light", "Roboto", -apple-system, sans-serif;
+      font-size: clamp(60px, 12.2vh, 136px);
+      font-weight: 300;
+      line-height: 0.86;
+      letter-spacing: -0.04em;
+      color: #ffffff;
+      text-shadow: var(--glow-hero);
+      white-space: nowrap;
     }
 
     .hero-weather-info {
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
+      align-items: flex-start;
       justify-content: center;
-      gap: clamp(4px, 0.75vh, 11px);
+      gap: clamp(4px, 0.75vh, 10px);
       min-width: 0;
     }
 
@@ -471,7 +440,7 @@
     .hero-cond-row {
       display: flex;
       align-items: center;
-      gap: clamp(8px, 0.8vw, 14px);
+      gap: clamp(8px, 0.9vw, 16px);
       font-size: clamp(13px, min(2.35vh, 1.45vw), 25px);
       font-weight: 600;
       color: #ffffff;
@@ -489,14 +458,67 @@
       line-height: 1.15;
     }
 
-    .hero-temp {
-      font-size: clamp(58px, 11.8vh, 132px);
-      font-weight: 200;
-      line-height: 0.86;
-      letter-spacing: -0.04em;
-      color: #ffffff;
-      text-shadow: var(--glow-hero);
+    /* Compact single-line Time, Date & Night-Dim Icon directly above 12h Forecast */
+    .hero-status-bar {
+      width: 100%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: clamp(8px, 0.85vw, 14px);
+      padding-top: clamp(2px, 0.3vh, 4px);
       white-space: nowrap;
+    }
+
+    .hero-time-inline {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 3px;
+      line-height: 1;
+    }
+
+    .hero-time {
+      font-size: clamp(13px, 1.85vh, 20px);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: #ffffff;
+      text-shadow: var(--glow-soft);
+    }
+
+    .hero-sec {
+      font-size: clamp(9.5px, 1.25vh, 13.5px);
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .hero-sep {
+      font-size: clamp(9px, 1.2vh, 13px);
+      color: rgba(255, 255, 255, 0.38);
+    }
+
+    .hero-date {
+      font-size: clamp(11px, 1.5vh, 16px);
+      font-weight: 400;
+      color: var(--text-soft);
+      text-shadow: var(--glow-soft);
+    }
+
+    /* Night Dim Icon Only */
+    .night-dim-icon {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: #fde68a;
+      filter: drop-shadow(0 0 6px rgba(253, 230, 138, 0.75));
+      align-self: center;
+    }
+    .night-dim-icon svg {
+      width: clamp(11px, 1.45vh, 16px);
+      height: clamp(11px, 1.45vh, 16px);
+      display: block;
+    }
+    body[data-night-dim="on"] .night-dim-icon {
+      display: inline-flex;
     }
 
     /* =====================================================================
@@ -1347,33 +1369,39 @@
   <main class="dashboard">
     <!-- ==================== LEFT COLUMN ==================== -->
     <section class="left-col">
-      <!-- Row 1: Expanded Current Weather & Compact Clock -->
+      <!-- Row 1: Centered Current Weather + Compact Single-Line Time / Date / Dim Icon -->
       <header class="hero-block">
-        <div class="hero-clock-wrap">
-          <div class="hero-time-row">
-            <span class="hero-time" id="clock-hm">--:--</span>
-            <span class="hero-sec" id="clock-sec">--</span>
-          </div>
-          <div class="hero-date-row">
-            <div class="hero-date" id="clock-date">----年--月--日 (-)</div>
-            <span class="night-dim-badge" id="night-dim-badge">🌙 深夜減光中</span>
+        <div class="hero-weather-center">
+          <div class="hero-weather-wrap">
+            <div class="hero-temp" id="cur-temp">--°</div>
+            <div class="hero-weather-info">
+              <div class="hero-loc-row">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/>
+                </svg>
+                <span id="loc-name">横浜</span>
+              </div>
+              <div class="hero-cond-row">
+                <span id="cur-cond">読込中</span>
+                <span id="cur-hilo">最高 --°  最低 --°</span>
+              </div>
+              <div class="hero-sub-metrics" id="cur-sub">体感 --° ・ 湿度 --% ・ 風速 --m/s</div>
+            </div>
           </div>
         </div>
-        <div class="hero-weather-wrap">
-          <div class="hero-weather-info">
-            <div class="hero-loc-row">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/>
-              </svg>
-              <span id="loc-name">横浜</span>
-            </div>
-            <div class="hero-cond-row">
-              <span id="cur-cond">読込中</span>
-              <span id="cur-hilo">最高 --°  最低 --°</span>
-            </div>
-            <div class="hero-sub-metrics" id="cur-sub">体感 --° ・ 湿度 --% ・ 風速 --m/s</div>
-          </div>
-          <div class="hero-temp" id="cur-temp">--°</div>
+
+        <div class="hero-status-bar">
+          <span class="hero-time-inline">
+            <span class="hero-time" id="clock-hm">--:--</span>
+            <span class="hero-sec" id="clock-sec">--</span>
+          </span>
+          <span class="hero-sep">・</span>
+          <span class="hero-date" id="clock-date">----年--月--日 (-)</span>
+          <span class="night-dim-icon" id="night-dim-badge" aria-label="深夜減光中" title="深夜減光中">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </span>
         </div>
       </header>
 
@@ -1566,6 +1594,10 @@
     (function () {
       'use strict';
 
+      if (/Silk|AFT/i.test(navigator.userAgent)) {
+        document.documentElement.classList.add('is-firetv');
+      }
+
       /* ===================================================================
          CONFIG
          =================================================================== */
@@ -1579,7 +1611,7 @@
         radarIntervalMs: 10 * 60 * 1000,
         issIntervalMs: 10 * 1000,
         quakeIntervalMs: 60 * 1000,
-        loopStepMs: 850,
+        loopStepMs: 900,
         loopHoldEndMs: 2200,
         cloudOpacityLive: 0.78,
         cloudOpacityForecast: 0.54,
@@ -1622,15 +1654,21 @@
       const pad2 = (n) => String(Math.floor(n)).padStart(2, '0');
       const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
-      async function fetchJson(url, timeoutMs = 9000) {
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+      async function fetchJson(url, timeoutMs = 10000) {
+        let ctrl = null;
+        let timer = null;
+        const opts = { cache: 'no-store' };
+        if (typeof AbortController !== 'undefined') {
+          ctrl = new AbortController();
+          opts.signal = ctrl.signal;
+          timer = setTimeout(() => ctrl.abort(), timeoutMs);
+        }
         try {
-          const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+          const res = await fetch(url, opts);
           if (!res.ok) throw new Error('HTTP ' + res.status);
           return await res.json();
         } finally {
-          clearTimeout(timer);
+          if (timer) clearTimeout(timer);
         }
       }
 
@@ -2249,59 +2287,61 @@
         window.addEventListener('resize', resize);
 
         function tick() {
-          ctx.clearRect(0, 0, w, h);
-          const theme = STATE.activeTheme;
+          try {
+            ctx.clearRect(0, 0, w, h);
+            const theme = STATE.activeTheme;
 
-          if (theme === 'clear-night' || theme === 'dawn' || theme === 'sunset') {
-            const mult = theme === 'clear-night' ? 1 : 0.35;
-            for (const s of stars) {
-              s.phase += s.speed;
-              const alpha = (0.25 + 0.65 * (0.5 + 0.5 * Math.sin(s.phase))) * mult;
-              ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+            if (theme === 'clear-night' || theme === 'dawn' || theme === 'sunset') {
+              const mult = theme === 'clear-night' ? 1 : 0.35;
+              for (const s of stars) {
+                s.phase += s.speed;
+                const alpha = (0.25 + 0.65 * (0.5 + 0.5 * Math.sin(s.phase))) * mult;
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+                ctx.beginPath();
+                ctx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2);
+                ctx.fill();
+              }
+              if (theme === 'clear-night' && !shoot && Math.random() < 0.004) {
+                shoot = { x: (0.15 + Math.random() * 0.7) * w, y: Math.random() * h * 0.35, vx: 7, vy: 3.5, life: 1 };
+              }
+              if (shoot) {
+                ctx.strokeStyle = `rgba(255, 255, 255, ${(shoot.life * 0.85).toFixed(2)})`;
+                ctx.lineWidth = 1.6;
+                ctx.beginPath();
+                ctx.moveTo(shoot.x, shoot.y);
+                ctx.lineTo(shoot.x - shoot.vx * 6, shoot.y - shoot.vy * 6);
+                ctx.stroke();
+                shoot.x += shoot.vx;
+                shoot.y += shoot.vy;
+                shoot.life -= 0.04;
+                if (shoot.life <= 0) shoot = null;
+              }
+            } else if (theme === 'rain') {
+              ctx.strokeStyle = 'rgba(200, 230, 255, 0.22)';
+              ctx.lineWidth = 1.1;
               ctx.beginPath();
-              ctx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2);
-              ctx.fill();
-            }
-            if (theme === 'clear-night' && !shoot && Math.random() < 0.004) {
-              shoot = { x: (0.15 + Math.random() * 0.7) * w, y: Math.random() * h * 0.35, vx: 7, vy: 3.5, life: 1 };
-            }
-            if (shoot) {
-              ctx.strokeStyle = `rgba(255, 255, 255, ${(shoot.life * 0.85).toFixed(2)})`;
-              ctx.lineWidth = 1.6;
-              ctx.beginPath();
-              ctx.moveTo(shoot.x, shoot.y);
-              ctx.lineTo(shoot.x - shoot.vx * 6, shoot.y - shoot.vy * 6);
+              for (const d of drops) {
+                d.y += d.vy;
+                d.x -= d.vy * 0.14;
+                if (d.y > 1.05) { d.y = -0.05; d.x = Math.random() * 1.15; }
+                const px = d.x * w, py = d.y * h;
+                ctx.moveTo(px, py);
+                ctx.lineTo(px - 2.5, py + d.len);
+              }
               ctx.stroke();
-              shoot.x += shoot.vx;
-              shoot.y += shoot.vy;
-              shoot.life -= 0.04;
-              if (shoot.life <= 0) shoot = null;
+            } else if (theme === 'snow') {
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+              for (const f of flakes) {
+                f.y += f.vy;
+                f.drift += 0.02;
+                f.x += Math.sin(f.drift) * 0.00045;
+                if (f.y > 1.04) { f.y = -0.04; f.x = Math.random(); }
+                ctx.beginPath();
+                ctx.arc(f.x * w, f.y * h, f.r, 0, Math.PI * 2);
+                ctx.fill();
+              }
             }
-          } else if (theme === 'rain') {
-            ctx.strokeStyle = 'rgba(200, 230, 255, 0.22)';
-            ctx.lineWidth = 1.1;
-            ctx.beginPath();
-            for (const d of drops) {
-              d.y += d.vy;
-              d.x -= d.vy * 0.14;
-              if (d.y > 1.05) { d.y = -0.05; d.x = Math.random() * 1.15; }
-              const px = d.x * w, py = d.y * h;
-              ctx.moveTo(px, py);
-              ctx.lineTo(px - 2.5, py + d.len);
-            }
-            ctx.stroke();
-          } else if (theme === 'snow') {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
-            for (const f of flakes) {
-              f.y += f.vy;
-              f.drift += 0.02;
-              f.x += Math.sin(f.drift) * 0.00045;
-              if (f.y > 1.04) { f.y = -0.04; f.x = Math.random(); }
-              ctx.beginPath();
-              ctx.arc(f.x * w, f.y * h, f.r, 0, Math.PI * 2);
-              ctx.fill();
-            }
-          }
+          } catch (_) { /* keep loop alive */ }
           requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
@@ -2309,6 +2349,7 @@
 
       /* ===================================================================
          5. PRECIPITATION RADAR (JMA NOWCAST / RAINVIEWER) + HIMAWARI CLOUDS
+            FIXED: Unified Date.now() clock + negative-index guard for Silk/Fire TV
          =================================================================== */
       const RADAR = {
         map: null,
@@ -2316,8 +2357,9 @@
         cloudFrames: [],
         activeIdx: -1,
         activeCloudIdx: -1,
-        loopStartMs: performance.now(),
-        rafId: null
+        loopStartEpochMs: Date.now(),
+        rafId: null,
+        retryTimer: null
       };
 
       function parseJmaUtc(str) {
@@ -2467,9 +2509,9 @@
           let area = 'jp';
           let minZ = 6, maxZ = 6;
           try {
-            list = await fetchJson('https://www.jma.go.jp/bosai/himawari/data/satimg/targetTimes_jp.json', 8000);
+            list = await fetchJson('https://www.jma.go.jp/bosai/himawari/data/satimg/targetTimes_jp.json', 10000);
           } catch (_) {
-            list = await fetchJson('https://www.jma.go.jp/bosai/himawari/data/satimg/targetTimes_fd.json', 8000);
+            list = await fetchJson('https://www.jma.go.jp/bosai/himawari/data/satimg/targetTimes_fd.json', 10000);
             area = 'fd';
             minZ = 3; maxZ = 5;
           }
@@ -2482,7 +2524,7 @@
               ts: parseJmaUtc(item.validtime)
             }))
             .sort((a, b) => a.ts - b.ts)
-            .slice(-10);
+            .slice(-6);
 
           clearOld();
           RADAR.cloudFrames = sorted.map((f) => {
@@ -2530,6 +2572,10 @@
 
       async function loadRadarFrames() {
         if (!RADAR.map) return;
+        if (RADAR.retryTimer) {
+          clearTimeout(RADAR.retryTimer);
+          RADAR.retryTimer = null;
+        }
 
         const replaceFrames = (newFrames) => {
           RADAR.frames.forEach((f) => {
@@ -2537,7 +2583,7 @@
           });
           RADAR.frames = newFrames;
           RADAR.activeIdx = -1;
-          RADAR.loopStartMs = performance.now();
+          RADAR.loopStartEpochMs = Date.now();
 
           if (newFrames.length) {
             const last = newFrames[newFrames.length - 1];
@@ -2548,23 +2594,23 @@
 
         try {
           const [n1, n2] = await Promise.all([
-            fetchJson('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json', 8000),
-            fetchJson('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N2.json', 8000).catch(() => [])
+            fetchJson('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json', 10000),
+            fetchJson('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N2.json', 10000).catch(() => [])
           ]);
 
           const pastList = (Array.isArray(n1) ? n1 : [])
-            .map((f) => ({ ...f, ts: parseJmaUtc(f.validtime), isForecast: false }))
+            .map((f) => ({ basetime: f.basetime, validtime: f.validtime, ts: parseJmaUtc(f.validtime), isForecast: false }))
             .sort((a, b) => a.ts - b.ts)
-            .slice(-7);
+            .slice(-5);
 
           const liveTs = pastList.length ? pastList[pastList.length - 1].ts : Date.now();
           const forecastList = (Array.isArray(n2) ? n2 : [])
-            .map((f) => ({ ...f, ts: parseJmaUtc(f.validtime), isForecast: true }))
+            .map((f) => ({ basetime: f.basetime, validtime: f.validtime, ts: parseJmaUtc(f.validtime), isForecast: true }))
             .filter((f) => f.ts > liveTs && ((f.ts - liveTs) % (10 * 60000) === 0 || (f.ts - liveTs) <= 60 * 60000))
             .sort((a, b) => a.ts - b.ts)
-            .slice(0, 6);
+            .slice(0, 5);
 
-          const combined = [...pastList, ...forecastList];
+          const combined = pastList.concat(forecastList);
           if (!combined.length) throw new Error('Empty JMA nowcast');
 
           const layers = combined.map((f) => {
@@ -2591,11 +2637,11 @@
         }
 
         try {
-          const rv = await fetchJson('https://api.rainviewer.com/public/weather-maps.json', 8000);
+          const rv = await fetchJson('https://api.rainviewer.com/public/weather-maps.json', 10000);
           const host = rv.host || 'https://tilecache.rainviewer.com';
-          const past = (rv.radar && rv.radar.past ? rv.radar.past : []).slice(-7).map((f) => ({ ...f, isForecast: false }));
-          const nowc = (rv.radar && rv.radar.nowcast ? rv.radar.nowcast : []).slice(0, 4).map((f) => ({ ...f, isForecast: true }));
-          const all = [...past, ...nowc];
+          const past = (rv.radar && rv.radar.past ? rv.radar.past : []).slice(-6).map((f) => ({ time: f.time, path: f.path, isForecast: false }));
+          const nowc = (rv.radar && rv.radar.nowcast ? rv.radar.nowcast : []).slice(0, 4).map((f) => ({ time: f.time, path: f.path, isForecast: true }));
+          const all = past.concat(nowc);
           if (!all.length) throw new Error('Empty RainViewer');
 
           const layers = all.map((f) => {
@@ -2616,14 +2662,18 @@
           });
           replaceFrames(layers);
         } catch (err2) {
-          console.warn('RainViewer failed:', err2);
+          console.warn('RainViewer failed, retrying in 15s:', err2);
+          RADAR.retryTimer = setTimeout(loadRadarFrames, 15000);
         }
       }
 
       function setRadarFrame(idx) {
-        if (!RADAR.frames.length || idx === RADAR.activeIdx) return;
+        const n = RADAR.frames.length;
+        if (!n || idx < 0 || idx >= n || idx === RADAR.activeIdx) return;
         RADAR.activeIdx = idx;
-        RADAR.frames.forEach((f, i) => f.layer.setOpacity(i === idx ? CONFIG.radarOpacity : 0));
+        for (let i = 0; i < n; i++) {
+          RADAR.frames[i].layer.setOpacity(i === idx ? CONFIG.radarOpacity : 0);
+        }
         const cur = RADAR.frames[idx];
         const curEl = document.getElementById('tl-cur');
         curEl.textContent = cur.timeStr;
@@ -2635,26 +2685,39 @@
         const fillEl = document.getElementById('tl-fill');
         const headEl = document.getElementById('tl-playhead');
 
-        function step(nowMs) {
-          const n = RADAR.frames.length;
-          if (n > 1) {
-            const runMs = (n - 1) * CONFIG.loopStepMs;
-            const cycleMs = runMs + CONFIG.loopHoldEndMs;
-            const elapsed = (nowMs - RADAR.loopStartMs) % cycleMs;
-            const progress = Math.min(1, elapsed / runMs);
-            const pct = (progress * 100).toFixed(3) + '%';
-            fillEl.style.width = pct;
-            headEl.style.left = pct;
+        function tickTimeline() {
+          try {
+            const n = RADAR.frames.length;
+            if (n > 1) {
+              const runMs = (n - 1) * CONFIG.loopStepMs;
+              const cycleMs = runMs + CONFIG.loopHoldEndMs;
+              const delta = Math.max(0, Date.now() - RADAR.loopStartEpochMs);
+              const elapsed = delta % cycleMs;
+              const progress = Math.max(0, Math.min(1, elapsed / runMs));
+              const pct = (progress * 100).toFixed(2) + '%';
+              fillEl.style.width = pct;
+              headEl.style.left = pct;
 
-            const idx = elapsed >= runMs ? (n - 1) : Math.min(n - 1, Math.floor(elapsed / CONFIG.loopStepMs));
-            if (idx !== RADAR.activeIdx) setRadarFrame(idx);
-          } else if (n === 1) {
-            fillEl.style.width = '100%';
-            headEl.style.left = '100%';
+              const idx = elapsed >= runMs
+                ? (n - 1)
+                : Math.max(0, Math.min(n - 1, Math.floor(elapsed / CONFIG.loopStepMs)));
+              if (idx !== RADAR.activeIdx) setRadarFrame(idx);
+            } else if (n === 1) {
+              fillEl.style.width = '100%';
+              headEl.style.left = '100%';
+            }
+          } catch (e) {
+            console.warn('Radar timeline step recovered:', e);
           }
-          RADAR.rafId = requestAnimationFrame(step);
         }
-        RADAR.rafId = requestAnimationFrame(step);
+
+        function rafStep() {
+          tickTimeline();
+          RADAR.rafId = requestAnimationFrame(rafStep);
+        }
+        RADAR.rafId = requestAnimationFrame(rafStep);
+        // Fallback heartbeat so Silk Browser never stalls timeline playback
+        setInterval(tickTimeline, 180);
       }
 
       /* ===================================================================
@@ -2801,8 +2864,9 @@
         const rad = Math.PI / 180;
         const dLat = (lat2 - lat1) * rad;
         const dLon = (lon2 - lon1) * rad;
-        const a = Math.sin(dLat / 2) ** 2 +
-                  Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+        const s1 = Math.sin(dLat / 2);
+        const s2 = Math.sin(dLon / 2);
+        const a = s1 * s1 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * s2 * s2;
         return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
       }
 
